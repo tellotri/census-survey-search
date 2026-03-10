@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Census Questionnaire Search</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 0; font-family: 'Inter', system-ui, sans-serif; background: #f1f5f9; }
+    input:focus { outline: none; border-color: #3b82f6 !important; }
+    select { background: #f8fafc; }
+    mark { background: #fef08a; border-radius: 2px; padding: 0 1px; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState } = React;
+
+const DB = [
+  // ── BTOS — Shared Core (all cycles) ─────────────────────────────────────
+  // Questions appearing in Core (Cycles 1,3,4 / 2022–2026), AI Supplement (Cycle 2 / 2023–2026), and WFH Supplement (Cycle 2 / 2024–2025)
+  { id: "btos-c2", survey: "BTOS", year: "2022–2026", years: ["Core","AI Supplement","WFH Supplement"], section: "Business Status", question: "Which of the following best describes the current operational status of this business? (In business / Temporarily or seasonally inactive / Ceased operation / Sold or leased to another operator)" },
+  { id: "btos-c3", survey: "BTOS", year: "2022–2026", years: ["Core","AI Supplement","WFH Supplement"], section: "Current Conditions", question: "Overall, how would you describe this business's current performance? (Excellent / Above average / Average / Below average / Poor)" },
+  { id: "btos-c4", survey: "BTOS", year: "2022–2026", years: ["Core","AI Supplement","WFH Supplement"], section: "Current Conditions", question: "In the last two weeks, how did this business's operating revenues/sales/receipts change compared to the prior two weeks? (Increased / Decreased / No change)" },
+  { id: "btos-c5", survey: "BTOS", year: "2022–2026", years: ["Core","AI Supplement","WFH Supplement"], section: "Current Conditions", question: "In the last two weeks, how did this business's number of paid employees change? (Increased / Decreased / No change)" },
+  { id: "btos-c6", survey: "BTOS", year: "2022–2026", years: ["Core","AI Supplement","WFH Supplement"], section: "Current Conditions", question: "In the last two weeks, how did the total number of hours worked by this business's paid employees change? (Increased / Decreased / No change)" },
+  { id: "btos-c9", survey: "BTOS", year: "2022–2026", years: ["Core","AI Supplement","WFH Supplement"], section: "Current Conditions", question: "In the last two weeks, how did the time it takes for this business to receive deliveries from suppliers change? (Increased / Decreased / No change / Not applicable)" },
+  { id: "btos-c10", survey: "BTOS", year: "2022–2026", years: ["Core","AI Supplement","WFH Supplement"], section: "Current Conditions", question: "How would you describe this business's current inventories? (Larger than optimal / Optimal / Smaller than optimal / Not applicable)" },
+  { id: "btos-c11", survey: "BTOS", year: "2022–2026", years: ["Core","AI Supplement","WFH Supplement"], section: "Current Conditions", question: "In the last two weeks, how did demand for this business's goods or services change? (Increased / Decreased / No change)" },
+  { id: "btos-c12", survey: "BTOS", year: "2022–2026", years: ["Core","AI Supplement","WFH Supplement"], section: "Current Conditions", question: "In the last two weeks, how did the prices this business charges for its own goods or services change? (Increased / Decreased / No change)" },
+  { id: "btos-c13", survey: "BTOS", year: "2022–2026", years: ["Core","AI Supplement","WFH Supplement"], section: "Current Conditions", question: "In the last two weeks, how did the prices this business pays for goods or services change? (Increased / Decreased / No change)" },
+  { id: "btos-c14", survey: "BTOS", year: "2022–2026", years: ["Core","AI Supplement","WFH Supplement"], section: "Current Conditions", question: "In the last six months, in what ways did changes to interest rates negatively impact this business? (Decreased profitability / Inability to service debt / Inability to refinance existing loans / Inability to invest in this business / Not applicable)" },
+  { id: "btos-c15", survey: "BTOS", year: "2022–2026", years: ["Core","AI Supplement","WFH Supplement"], section: "Current Conditions", question: "In the last six months, did this business experience any monetary losses due to an extreme weather event (for example, hurricane, flood, drought, or heat wave)? (Yes / No)" },
+  { id: "btos-c16", survey: "BTOS", year: "2022–2026", years: ["Core","AI Supplement","WFH Supplement"], section: "Current Conditions", question: "What type of extreme weather event caused the monetary losses? (Wildfire / Earthquake / Hurricane / Tornado / Flood / Drought / High winds / Severe storm/hail / Snow/blizzard/ice / Extreme temperature / Other)" },
+  { id: "btos-c17", survey: "BTOS", year: "2022–2026", years: ["Core","AI Supplement","WFH Supplement"], section: "Expectations", question: "Six months from now, how do you think you will describe this business's performance? (Excellent / Above average / Average / Below average / Poor)" },
+  { id: "btos-c18", survey: "BTOS", year: "2022–2026", years: ["Core","AI Supplement","WFH Supplement"], section: "Expectations", question: "Six months from now, how do you think this business's number of paid employees will have changed? (Increased / Decreased / No change)" },
+  { id: "btos-c19", survey: "BTOS", year: "2022–2026", years: ["Core","AI Supplement","WFH Supplement"], section: "Expectations", question: "Six months from now, how do you think the total number of hours worked by this business's paid employees will have changed? (Increased / Decreased / No change)" },
+  { id: "btos-c20", survey: "BTOS", year: "2022–2026", years: ["Core","AI Supplement","WFH Supplement"], section: "Expectations", question: "Six months from now, how do you think the time it takes for this business to receive deliveries from suppliers will have changed? (Increased / Decreased / No change / Not applicable)" },
+  { id: "btos-c21", survey: "BTOS", year: "2022–2026", years: ["Core","AI Supplement","WFH Supplement"], section: "Expectations", question: "Six months from now, how do you think you will describe this business's inventories? (Larger than optimal / Optimal / Smaller than optimal / Not applicable)" },
+  { id: "btos-c22", survey: "BTOS", year: "2022–2026", years: ["Core","AI Supplement","WFH Supplement"], section: "Expectations", question: "Six months from now, how do you think demand for this business's goods or services will have changed? (Increased / Decreased / No change)" },
+  { id: "btos-c23", survey: "BTOS", year: "2022–2026", years: ["Core","AI Supplement","WFH Supplement"], section: "Expectations", question: "Six months from now, how do you think the prices this business charges for its own goods or services will have changed? (Increased / Decreased / No change)" },
+  { id: "btos-c24", survey: "BTOS", year: "2022–2026", years: ["Core","AI Supplement","WFH Supplement"], section: "Expectations", question: "Six months from now, how do you think the prices this business pays for goods or services will have changed? (Increased / Decreased / No change)" },
+  // ── BTOS — Core + WFH only (not in AI Supplement cycle) ──────────────────
+  { id: "btos-c7", survey: "BTOS", year: "2022–2026", years: ["Core","WFH Supplement"], section: "Current Conditions", question: "In the last two weeks, did this business use Artificial Intelligence (AI) in producing goods or services? (Examples of AI: machine learning, natural language processing, virtual agents, voice recognition, etc.) (Yes / No / Do not know)" },
+  { id: "btos-c25", survey: "BTOS", year: "2022–2026", years: ["Core","WFH Supplement"], section: "Expectations", question: "During the next six months, do you think this business will be using Artificial Intelligence (AI) in producing goods or providing services? (Yes / No / Do not know)" },
+  // ── BTOS — WFH Supplement only (Cycle 2 / 2024–2025) ────────────────────
+  { id: "btos-wfh-q6", survey: "BTOS – WFH Supplement", year: "2024–2025", section: "Work from Home", question: "In the last two weeks, did this business have any paid employees who worked from home for at least one workday (6 or more hours)? (Yes / No)" },
+  { id: "btos-wfh-q8", survey: "BTOS – WFH Supplement", year: "2024–2025", section: "Business Operations", question: "In the last two weeks, did this business do any of the following? (Open a new location / Open a previously closed location / Temporarily close a location / Permanently close a location / None of the above)" },
+  { id: "btos-wfh-q25", survey: "BTOS – WFH Supplement", year: "2024–2025", section: "Expectations", question: "During the next six months, do you think this business will do any of the following? (Open a new location / Open a previously closed location / Temporarily close a location / Permanently close a location / None of the above)" },
+  { id: "btos-wfh-q27", survey: "BTOS – WFH Supplement", year: "2024–2025", section: "Work from Home", question: "Approximately what percentage of this business's paid employees currently work from home any of their workdays? (Distribution across: never / occasionally / 1 day/week / 2 days/week / 3 days/week / 4 days/week / 5 or more days/week)" },
+  { id: "btos-wfh-q28", survey: "BTOS – WFH Supplement", year: "2024–2025", section: "Work from Home", question: "Five years ago (in 2019), approximately what percentage of this business's paid employees worked from home any of their workdays? (Distribution across same frequency categories)" },
+  { id: "btos-wfh-q29", survey: "BTOS – WFH Supplement", year: "2024–2025", section: "Work from Home", question: "Looking forward to five years from now (in 2029), approximately what percentage of this business's paid employees do you think will work from home any of their workdays?" },
+  { id: "btos-wfh-q30", survey: "BTOS – WFH Supplement", year: "2024–2025", section: "Work from Home", question: "Does this business pay its fully remote employees based partly on the cost of living where they live (locality pay)? (Yes / No / Do not know / Not applicable)" },
+  { id: "btos-wfh-q31", survey: "BTOS – WFH Supplement", year: "2024–2025", section: "Work from Home", question: "What factors limit the ability of this business's paid employees to work from home? (Parts or all of the job cannot be performed from home / Management too costly or complicated / Efficiency/productivity concerns / Challenges around mentoring/teamwork / Legal/regulatory/tax reasons / Security concerns / Other / No factors limit work from home)" },
+  { id: "btos-wfh-q32", survey: "BTOS – WFH Supplement", year: "2024–2025", section: "Work from Home", question: "Does this business have a work from home policy with any minimum in-person (onsite) requirements? (Yes / No)" },
+  { id: "btos-wfh-q33", survey: "BTOS – WFH Supplement", year: "2024–2025", section: "Work from Home", question: "How does this business track whether paid employees meet the minimum in-person (onsite) requirements? (Badge swipe or sign-in sheet / Attendance at in-person meetings / Manager checks / Other / Business does not track)" },
+  { id: "btos-wfh-q34", survey: "BTOS – WFH Supplement", year: "2024–2025", section: "Work from Home", question: "How does this business monitor the activity of paid employees working from home? (Computer activity / Attendance in online meetings / Specific output measures / Other / Business does not monitor remote employees)" },
+  { id: "btos-wfh-q35", survey: "BTOS – WFH Supplement", year: "2024–2025", section: "Work from Home", question: "How does this business monitor the activity of paid employees working in-person (onsite)? (Arrival/departure times / Computer activity / Attendance in meetings / Specific output measures / Other / Business does not monitor in-person employees)" },
+  { id: "btos-wfh-q36", survey: "BTOS – WFH Supplement", year: "2024–2025", section: "Work from Home", question: "Has this business observed differences in productivity for paid employees based on whether they are working from home or in-person (onsite)? (Yes, work from home more productive / Yes, in-person more productive / No observed differences / Do not know / Not applicable)" },
+  // ── BTOS — AI Supplement only (Cycle 2 / 2023–2026) ─────────────────────
+  { id: "btos-ai-q23", survey: "BTOS – AI Supplement", year: "2023–2026", section: "AI Use", question: "In the last two weeks, did this business use Artificial Intelligence (AI) in any of its business functions? (Examples of AI: machine learning, natural language processing, virtual agents, voice recognition, etc.) (Yes / No / Do not know)" },
+  { id: "btos-ai-q24", survey: "BTOS – AI Supplement", year: "2023–2026", section: "AI Use", question: "In the last six months, did this business use Artificial Intelligence (AI) in any of the following business functions? [Grid: Production of goods / Provision of services / Strategy and business development / Finance and accounting / Sales and marketing / Customer service / R&D / IT / HR / Public relations / Management and administration / Sourcing and supply chains / Quality management / Distribution / Legal and compliance]" },
+  { id: "btos-ai-q25", survey: "BTOS – AI Supplement", year: "2023–2026", section: "AI Use", question: "In the last six months, did this business use Artificial Intelligence (AI) to: Perform a task previously done by an employee / Supplement or enhance a task performed by an employee / Introduce a new task not previously done by an employee / None of the above?" },
+  { id: "btos-ai-q26", survey: "BTOS – AI Supplement", year: "2023–2026", section: "AI Use", question: "In the last six months, how many tasks previously done by employees were instead performed by Artificial Intelligence (AI)? (A small number / A moderate number / A large number)" },
+  { id: "btos-ai-q27", survey: "BTOS – AI Supplement", year: "2023–2026", section: "AI Use", question: "In the last six months, did this business use Artificial Intelligence (AI) to perform operations previously performed by existing software or equipment? (Yes / No / Do not know)" },
+  { id: "btos-ai-q28", survey: "BTOS – AI Supplement", year: "2023–2026", section: "AI Use", question: "In the last six months, how did the use of Artificial Intelligence (AI) affect this business's total employment? (Increased / Decreased / Did not change)" },
+  { id: "btos-ai-q29", survey: "BTOS – AI Supplement", year: "2023–2026", section: "AI Use", question: "In the last six months, to use Artificial Intelligence (AI), what changes did this business make? (Trained current staff / Hired staff trained in AI / Purchased computing power or specialized equipment / Purchased cloud services / Changed data collection practices / Developed new workflows / Used vendors or consulting services / Other / No changes)" },
+  { id: "btos-ai-q30", survey: "BTOS – AI Supplement", year: "2023–2026", section: "AI Use", question: "In the last six months, did this business's employees use Artificial Intelligence (AI) to assist in any work-related tasks that support business functions? (e.g. software coding, writing emails, preparing visualizations, summarizing documents, gathering and processing information) (Yes / No / Do not know)" },
+  { id: "btos-ai-q31", survey: "BTOS – AI Supplement", year: "2023–2026", section: "Generative AI", question: "In the last six months, did this business's employees use Generative AI to assist in any work-related tasks? (Generative AI uses prompts to create text, images, music, videos, or code. Examples: ChatGPT, Gemini, Copilot, Claude, Dall-E, MidJourney, GitHub Copilot.) (Yes / No / Do not know)" },
+  { id: "btos-ai-q32", survey: "BTOS – AI Supplement", year: "2023–2026", section: "Generative AI", question: "In the last six months, what work-related tasks did this business's employees use Generative AI to assist with? (Information processing / Writing or editing documents / Interpreting or summarizing documents / Customer support / Developing new projects or products / Searching for information / Software coding or debugging / Data analysis or visualization / Tutoring or training / Other)" },
+  { id: "btos-ai-q33", survey: "BTOS – AI Supplement", year: "2023–2026", section: "AI Adoption Plans", question: "During the next six months, do you think this business will be using Artificial Intelligence (AI) in any of its business functions? (Yes / No / Do not know)" },
+  { id: "btos-ai-q34", survey: "BTOS – AI Supplement", year: "2023–2026", section: "AI Adoption Plans", question: "During the next six months, do you think this business will be using Artificial Intelligence (AI) in any of the following business functions? [Grid: same 15 business function categories as Q24]" },
+  { id: "btos-ai-q35", survey: "BTOS – AI Supplement", year: "2023–2026", section: "AI Adoption Plans", question: "Why does this business not plan to use Artificial Intelligence (AI) during the next six months? (Too expensive / Not mature enough / Lack of knowledge / Privacy/security concerns / Concerns about bias / Lack of skilled workforce / Lack of required data / Laws and regulations / Previous use did not meet expectations / Not applicable to this business / Other)" },
+  // ── ABS 2018 ─────────────────────────────────────────────────────────────
+  { id: "abs18-tech1", survey: "Annual Business Survey (ABS)", year: "2018", section: "Technology & AI", question: "During the three years 2015 to 2017, to what extent did this business use Artificial Intelligence in producing goods or services? (No use / Testing but not using in production / In use for less than 5% of production / 5–25% of production / More than 25% of production / Don't know)" },
+  { id: "abs18-tech2", survey: "Annual Business Survey (ABS)", year: "2018", section: "Technology & AI", question: "During the three years 2015 to 2017, to what extent did this business use Machine Learning software in producing goods or services?" },
+  { id: "abs18-tech3", survey: "Annual Business Survey (ABS)", year: "2018", section: "Technology & AI", question: "During the three years 2015 to 2017, to what extent did this business use Natural Language Processing in producing goods or services?" },
+  { id: "abs18-tech4", survey: "Annual Business Survey (ABS)", year: "2018", section: "Technology & AI", question: "During the three years 2015 to 2017, to what extent did this business use Machine Vision software in producing goods or services?" },
+  { id: "abs18-tech5", survey: "Annual Business Survey (ABS)", year: "2018", section: "Technology & AI", question: "During the three years 2015 to 2017, to what extent did this business use Voice Recognition software in producing goods or services?" },
+  { id: "abs18-tech6", survey: "Annual Business Survey (ABS)", year: "2018", section: "Technology & Automation", question: "During the three years 2015 to 2017, to what extent did this business use Robotics in producing goods or services?" },
+  { id: "abs18-tech7", survey: "Annual Business Survey (ABS)", year: "2018", section: "Technology & Automation", question: "During the three years 2015 to 2017, to what extent did this business use Automated Guided Vehicles (AGV) or AGV systems?" },
+  { id: "abs18-tech8", survey: "Annual Business Survey (ABS)", year: "2018", section: "Technology & Automation", question: "During the three years 2015 to 2017, to what extent did this business use Automated Storage and Retrieval Systems?" },
+  { id: "abs18-tech9", survey: "Annual Business Survey (ABS)", year: "2018", section: "Technology", question: "During the three years 2015 to 2017, to what extent did this business use Augmented Reality in producing goods or services?" },
+  { id: "abs18-tech10", survey: "Annual Business Survey (ABS)", year: "2018", section: "Technology", question: "During the three years 2015 to 2017, to what extent did this business use Radio-Frequency Identification (RFID) inventory systems?" },
+  { id: "abs18-tech11", survey: "Annual Business Survey (ABS)", year: "2018", section: "Technology", question: "During the three years 2015 to 2017, to what extent did this business use Touchscreens or kiosks for customer interface (e.g. self-checkout, self-check-in, touchscreen ordering)?" },
+  { id: "abs18-cloud1", survey: "Annual Business Survey (ABS)", year: "2018", section: "Cloud & Digital", question: "Considering the amount spent on IT functions, how much was spent on cloud services for: All IT functions / Security or firewall / Servers / Data storage and management / Collaboration and file synchronization / Data Analysis / Billing / Customer relationship management?" },
+  { id: "abs18-digital1", survey: "Annual Business Survey (ABS)", year: "2018", section: "Cloud & Digital", question: "In 2017, how much of each type of information was kept in digital format at this business? (Personnel / Financial / Customer Feedback / Marketing / Supply Chain / Production)" },
+  { id: "abs18-innov1", survey: "Annual Business Survey (ABS)", year: "2018", section: "Innovation", question: "During the three years 2015 to 2017, did this business introduce new or significantly improved goods or services?" },
+  { id: "abs18-innov2", survey: "Annual Business Survey (ABS)", year: "2018", section: "Innovation", question: "During the three years 2015 to 2017, did this business introduce new or significantly improved methods of manufacturing, logistics, or supporting activities (process innovation)?" },
+  { id: "abs18-innov3", survey: "Annual Business Survey (ABS)", year: "2018", section: "Innovation", question: "During the three years 2015 to 2017, did this business engage in in-house R&D activities to create new knowledge or solve scientific or technical problems?" },
+  { id: "abs18-innov4", survey: "Annual Business Survey (ABS)", year: "2018", section: "Innovation", question: "During the three years 2015 to 2017, did this business receive public financial support for innovation activities from local, state, or U.S. Federal government? (Including tax credits, grants, subsidized loans, and loan guarantees)" },
+  { id: "abs18-rd1", survey: "Annual Business Survey (ABS)", year: "2018", section: "R&D", question: "During 2017, did this business conduct activities aimed at acquiring new knowledge without specific immediate commercial applications (basic research)?" },
+  { id: "abs18-rd2", survey: "Annual Business Survey (ABS)", year: "2018", section: "R&D", question: "During 2017, did this business develop software that advanced scientific or technological knowledge?" },
+  { id: "abs18-rd3", survey: "Annual Business Survey (ABS)", year: "2018", section: "R&D", question: "What was the total cost (direct and indirect) in 2017 for all R&D activities? (Includes salaries, wages, materials, equipment, rent, consultants)" },
+  { id: "abs18-rd4", survey: "Annual Business Survey (ABS)", year: "2018", section: "R&D", question: "Of the total R&D costs, how much was funded by: This U.S. business / Foreign owner / Another U.S. business / U.S. university or college / U.S. Federal government / U.S. State or local government / Other organizations outside the U.S.?" },
+  { id: "abs18-ip1", survey: "Annual Business Survey (ABS)", year: "2018", section: "Intellectual Property", question: "How many U.S. patent applications did this business have pending as of the end of 2017?" },
+  { id: "abs18-ip2", survey: "Annual Business Survey (ABS)", year: "2018", section: "Intellectual Property", question: "How many U.S. patents did this business own as of the end of 2017?" },
+  { id: "abs18-ip3", survey: "Annual Business Survey (ABS)", year: "2018", section: "Intellectual Property", question: "During 2017, how important to this business were the following types of intellectual property protection? (Utility patents / Design patents / Trademarks / Copyrights / Trade secrets / Nondisclosure agreements)" },
+  { id: "abs18-owner1", survey: "Annual Business Survey (ABS)", year: "2018", section: "Owner Characteristics", question: "What is the sex, race, ethnicity, age, education level, and field of highest degree of the business owner(s)?" },
+  { id: "abs18-owner2", survey: "Annual Business Survey (ABS)", year: "2018", section: "Owner Characteristics", question: "Has the owner ever served in any branch of the U.S. Armed Forces, including the Coast Guard, National Guard, or Reserve?" },
+  { id: "abs18-owner3", survey: "Annual Business Survey (ABS)", year: "2018", section: "Owner Characteristics", question: "How important to the owner are the following reasons for owning this business? (Wanted to be own boss / Flexible hours / Balance work and family / Opportunity for greater income / Best avenue for ideas / Unable to find employment / Always wanted to start a business / Entrepreneurial role model / Carry on family business / Community involvement)" },
+  { id: "abs18-fin1", survey: "Annual Business Survey (ABS)", year: "2018", section: "Financing", question: "What was the source(s) of capital used to start or initially acquire this business? (Personal/family savings / Home equity loan / Personal credit cards / Business credit cards / Government-guaranteed business loan / SBA loans / Investment from venture capitalists / Grants / Other)" },
+  { id: "abs18-fin2", survey: "Annual Business Survey (ABS)", year: "2018", section: "Financing", question: "For 2017, did this business have profits, losses, or break even?" },
+  { id: "abs18-fin3", survey: "Annual Business Survey (ABS)", year: "2018", section: "Financing", question: "For 2017, which of the following negatively impacted the profitability of this business? (Access to financial capital / Cost of financial capital / Finding qualified labor / Taxes / Government regulations / Slow business or lost sales / Customers not paying / Unpredictability of business conditions / Changes in technology)" },
+  // ── ABS 2019 ─────────────────────────────────────────────────────────────
+  { id: "abs19-tech1", survey: "Annual Business Survey (ABS)", year: "2019", section: "Technology & AI", question: "During the three years 2016 to 2018, to what extent did this business use Artificial Intelligence in production processes for goods or services?" },
+  { id: "abs19-tech2", survey: "Annual Business Survey (ABS)", year: "2019", section: "Technology & AI", question: "During the three years 2016 to 2018, why did this business adopt or use Artificial Intelligence? (To automate tasks performed by labor / To improve quality or reliability / To expand range of goods or services / To upgrade outdated processes / To adopt standards and accreditation / Some other reason)" },
+  { id: "abs19-tech3", survey: "Annual Business Survey (ABS)", year: "2019", section: "Technology & AI", question: "During the three years 2016 to 2018, what were the effects of adopting or using Artificial Intelligence on: (A) The number of workers employed; (B) The skill level of workers; (C) The STEM skills of workers?" },
+  { id: "abs19-tech4", survey: "Annual Business Survey (ABS)", year: "2019", section: "Technology & AI", question: "During the three years 2016 to 2018, what effect did Artificial Intelligence have on the number of production workers / nonproduction workers / supervisory workers / nonsupervisory workers?" },
+  { id: "abs19-tech5", survey: "Annual Business Survey (ABS)", year: "2019", section: "Technology & AI", question: "During the three years 2016 to 2018, which factors adversely affected the adoption or utilization of Artificial Intelligence? (Too expensive / Technology not mature / Lacked access to required data / Laws and regulations / Safety and security concerns / Lacked access to capital / Required data not reliable / Technology not applicable / Lacked required human capital and talent)" },
+  { id: "abs19-tech6", survey: "Annual Business Survey (ABS)", year: "2019", section: "Technology & AI", question: "During the three years 2016 to 2018, did this business sell Artificial Intelligence or goods or services that included Artificial Intelligence?" },
+  { id: "abs19-tech7", survey: "Annual Business Survey (ABS)", year: "2019", section: "Technology & AI", question: "During the three years 2016 to 2018, why did this business produce Artificial Intelligence or goods and services that included AI? (To upgrade goods or services / To enter new markets / To increase or maintain market share / To expand range of goods or services / Other)" },
+  { id: "abs19-tech8", survey: "Annual Business Survey (ABS)", year: "2019", section: "Technology & Automation", question: "During the three years 2016 to 2018, to what extent did this business use Robotics in production processes for goods or services?" },
+  { id: "abs19-tech9", survey: "Annual Business Survey (ABS)", year: "2019", section: "Technology & Automation", question: "During the three years 2016 to 2018, what were the effects of adopting or using Robotics on number of workers, skill levels, and STEM skills of workers?" },
+  { id: "abs19-tech10", survey: "Annual Business Survey (ABS)", year: "2019", section: "Technology", question: "During the three years 2016 to 2018, to what extent did this business use Cloud-Based Computing Systems and Applications in production processes?" },
+  { id: "abs19-tech11", survey: "Annual Business Survey (ABS)", year: "2019", section: "Technology", question: "During the three years 2016 to 2018, to what extent did this business use Specialized Software (excluding AI) in production processes?" },
+  { id: "abs19-tech12", survey: "Annual Business Survey (ABS)", year: "2019", section: "Technology", question: "During the three years 2016 to 2018, to what extent did this business use Specialized Equipment (excluding Robotics) in production processes?" },
+  { id: "abs19-innov1", survey: "Annual Business Survey (ABS)", year: "2019", section: "Innovation", question: "During the three years 2016 to 2018, did this business introduce to the market any new or improved goods or services that differed significantly from the business's previous goods or services?" },
+  { id: "abs19-innov2", survey: "Annual Business Survey (ABS)", year: "2019", section: "Innovation", question: "During the three years 2016 to 2018, did this business introduce any new or improved business processes? (Methods for producing goods / Logistics and delivery methods / Marketing methods / Information and communication systems / Administration and management activities / Product and business process development activities)" },
+  { id: "abs19-innov3", survey: "Annual Business Survey (ABS)", year: "2019", section: "Innovation", question: "During the three years 2016 to 2018, did this business have any of the following innovation activities? (R&D / Engineering and design / Marketing and brand equity / Intellectual property activities / Employee training / Software development / Acquisition of machinery and equipment / Management related to innovation)" },
+  { id: "abs19-rd1", survey: "Annual Business Survey (ABS)", year: "2019", section: "R&D", question: "During 2018, did this business conduct R&D activities?" },
+  { id: "abs19-rd2", survey: "Annual Business Survey (ABS)", year: "2019", section: "R&D", question: "What was the total cost (direct and indirect) in 2018 for all R&D activities? Broken down by: salaries and wages / expensed machinery and equipment / materials and supplies / payments to others for R&D / depreciation / all other costs?" },
+  { id: "abs19-rd3", survey: "Annual Business Survey (ABS)", year: "2019", section: "R&D", question: "During 2018, of the total R&D domestic performance costs, how much was paid for by: This U.S. business / Foreign owner / Other U.S. businesses / U.S. Federal government / U.S. State or local government / Universities or colleges / Nonprofits / Other organizations outside the U.S.?" },
+  { id: "abs19-rd4", survey: "Annual Business Survey (ABS)", year: "2019", section: "R&D", question: "Did this business file for the tax credit for increasing research activities (IRS Form 6765) in 2018?" },
+  { id: "abs19-ip1", survey: "Annual Business Survey (ABS)", year: "2019", section: "Intellectual Property", question: "During 2018, did this business transfer intellectual property (IP) to others, receive IP from others, participate in cross-licensing agreements, allow free use of patents, or make use of open source patents?" },
+  { id: "abs19-ip2", survey: "Annual Business Survey (ABS)", year: "2019", section: "Intellectual Property", question: "During 2018, how important were the following types of intellectual property protection to this business? (Utility patents / Design patents / Trademarks / Copyrights / Trade secrets / Nondisclosure agreements)" },
+  { id: "abs19-owner1", survey: "Annual Business Survey (ABS)", year: "2019", section: "Owner Characteristics", question: "What is the sex, race, ethnicity, age, place of birth, U.S. citizenship, education level, and field of highest degree of each business owner (up to 4 owners)?" },
+  { id: "abs19-owner2", survey: "Annual Business Survey (ABS)", year: "2019", section: "Owner Characteristics", question: "Has the owner served in any branch of the U.S. Armed Forces, including Coast Guard, National Guard, or Reserve? Was any disability a result of illness or injury from military service?" },
+  { id: "abs19-owner3", survey: "Annual Business Survey (ABS)", year: "2019", section: "Owner Characteristics", question: "How important to the owner are the following reasons for owning this business? (Wanted to be own boss / Flexible hours / Balance work and family / Opportunity for greater income / Best avenue for ideas / Unable to find employment / Always wanted to start a business / Entrepreneurial role model / Carry on family business / Community involvement)" },
+  // ── ABS 2020 ─────────────────────────────────────────────────────────────
+  { id: "abs20-wfh1", survey: "Annual Business Survey (ABS)", year: "2020", section: "Work from Home", question: "In 2019, did this business allow any employees to work from home?" },
+  { id: "abs20-wfh2", survey: "Annual Business Survey (ABS)", year: "2020", section: "Work from Home", question: "In 2019, what percent of all employees at this business worked from home at the following frequencies? (Never / Less than one day per week / One day per week / Two to four days per week / Five days per week)" },
+  { id: "abs20-wfh3", survey: "Annual Business Survey (ABS)", year: "2020", section: "Work from Home", question: "In 2019, did any of the following factors limit the ability of this business's employees to work from home? (Job or parts of job cannot be performed from home / Management of employees working from home too costly or complicated / Security concerns / Other / No limiting factors)" },
+  { id: "abs20-dig1", survey: "Annual Business Survey (ABS)", year: "2020", section: "Digital Technologies & AI", question: "During the three years 2017 to 2019, to what extent did this business use the following digital technologies for innovation activities? (Computer infrastructure / Cloud computing / Artificial Intelligence / Automation / Internet-connected devices / Mobile communication technologies / Digital collaboration tools / Social media / ERP/CRM / Blockchain)" },
+  { id: "abs20-dig2", survey: "Annual Business Survey (ABS)", year: "2020", section: "Digital Technologies & AI", question: "During the three years 2017 to 2019, to what extent did this business use digital capabilities for innovation? (Digital integration across functions / Data analytics / Network solutions / Privacy and cybersecurity management / E-commerce and platform business models)" },
+  { id: "abs20-dig3", survey: "Annual Business Survey (ABS)", year: "2020", section: "Digital Technologies & AI", question: "During the three years 2017 to 2019, did this business obtain technical expertise for innovation through: Acquiring technology products / Acquiring intellectual property rights / Modifying or adapting existing technology / Developing new technology in-house?" },
+  { id: "abs20-innov1", survey: "Annual Business Survey (ABS)", year: "2020", section: "Innovation", question: "During the three years 2017 to 2019, did this business introduce to the market any new or improved goods that differed significantly from previous goods?" },
+  { id: "abs20-innov2", survey: "Annual Business Survey (ABS)", year: "2020", section: "Innovation", question: "During the three years 2017 to 2019, did this business introduce to the market any new or improved services that differed significantly from previous services?" },
+  { id: "abs20-innov3", survey: "Annual Business Survey (ABS)", year: "2020", section: "Innovation", question: "During the three years 2017 to 2019, did this business introduce any new or improved business processes? (Methods for producing goods or providing services / Logistics / Marketing / IT systems / Administration and management / Product development activities)" },
+  { id: "abs20-innov4", survey: "Annual Business Survey (ABS)", year: "2020", section: "Innovation", question: "During the three years 2017 to 2019, did this business have any innovation activities? (R&D / Engineering and design / Marketing / Intellectual property / Employee training / Software development / Acquisition of machinery / Management related to innovation)" },
+  { id: "abs20-innov5", survey: "Annual Business Survey (ABS)", year: "2020", section: "Innovation", question: "During the three years 2017 to 2019, did this business cooperate with any of the following partners in developing new goods or services? (Parent/affiliated business / Suppliers / Other businesses / Government / Customers / Consultants / Universities / Nonprofits / Households)" },
+  { id: "abs20-innov6", survey: "Annual Business Survey (ABS)", year: "2020", section: "Innovation", question: "During the three years 2017 to 2019, how discouraging were the following factors for conducting innovation activities? (Lack of internal finance / Lack of credit / Public grants difficulties / High costs / Lack of skilled employees / Lack of collaboration partners / Government regulations)" },
+  { id: "abs20-rd1", survey: "Annual Business Survey (ABS)", year: "2020", section: "R&D", question: "During 2019, did this business conduct R&D activities?" },
+  { id: "abs20-rd2", survey: "Annual Business Survey (ABS)", year: "2020", section: "R&D", question: "What was the total cost (direct and indirect) in 2019 for all R&D activities? Broken down by: salaries and wages / equipment / materials and supplies / payments to others for R&D / depreciation / all other costs?" },
+  { id: "abs20-rd3", survey: "Annual Business Survey (ABS)", year: "2020", section: "R&D", question: "During 2019, of the total R&D costs, how much was paid for by: This U.S. business / Foreign owner / Other U.S. businesses / U.S. Federal government (which agency?) / U.S. State or local government / Universities or colleges / Nonprofits / Other organizations outside the U.S.?" },
+  { id: "abs20-trade1", survey: "Annual Business Survey (ABS)", year: "2020", section: "Domestic & Foreign Transactions", question: "In 2019, did any unaffiliated companies located in the United States conduct any of the following activities for this business? (Core production / Distribution and logistics / Marketing and sales / Administrative or management functions / R&D / Engineering / ICT services)" },
+  { id: "abs20-trade2", survey: "Annual Business Survey (ABS)", year: "2020", section: "Domestic & Foreign Transactions", question: "In 2019, did any companies located outside the United States conduct any of the following activities for this business? (Core production / Distribution and logistics / Marketing and sales / Administrative or management functions / R&D / Engineering / ICT services)" },
+  { id: "abs20-trade3", survey: "Annual Business Survey (ABS)", year: "2020", section: "Domestic & Foreign Transactions", question: "In 2019, did this business contract out any manufacturing tasks or purchase manufacturing services from any unaffiliated company or affiliated companies located outside the United States?" },
+  // ── MOPS (merged across 2010, 2015, 2021) ────────────────────────────────
+  { id: "mops-mgmt-1", survey: "MOPS", year: "2010, 2015, 2021", years: ["2010","2015","2021"], section: "Management Practices", question: "What best describes what happened at this establishment when a problem in the production process arose? (We fixed it but did not take further action / We fixed it and took action to prevent recurrence / We fixed it, took action, and had a continuous improvement process / No action was taken)" },
+  { id: "mops-mgmt-2", survey: "MOPS", year: "2010, 2015, 2021", years: ["2010","2015","2021"], section: "Management Practices", question: "How many key performance indicators were monitored at this establishment? (1–2 / 3–9 / 10 or more / None)" },
+  { id: "mops-mgmt-3", survey: "MOPS", year: "2010, 2015, 2021", years: ["2010","2015","2021"], section: "Management Practices", question: "How frequently were the key performance indicators reviewed by managers at this establishment? (Yearly / Quarterly / Monthly / Weekly / Daily / Hourly or more / Never)" },
+  { id: "mops-mgmt-4", survey: "MOPS", year: "2010, 2015, 2021", years: ["2010","2015","2021"], section: "Management Practices", question: "How frequently were the key performance indicators reviewed by non-managers at this establishment?" },
+  { id: "mops-mgmt-5", survey: "MOPS", year: "2010, 2015, 2021", years: ["2010","2015","2021"], section: "Management Practices", question: "Where were the production display boards showing output and key performance indicators located at this establishment? (All in one place / Multiple places / No display boards)" },
+  { id: "mops-mgmt-6", survey: "MOPS", year: "2010, 2015, 2021", years: ["2010","2015","2021"], section: "Management Practices", question: "What best describes the time frame of production targets at this establishment? (Short-term / Long-term / Combination / No production targets)" },
+  { id: "mops-mgmt-7", survey: "MOPS", year: "2010, 2015, 2021", years: ["2010","2015","2021"], section: "Management Practices", question: "How easy or difficult was it for this establishment to achieve its production targets? (Without much effort / Some effort / Normal effort / More than normal effort / Extraordinary effort)" },
+  { id: "mops-mgmt-8", survey: "MOPS", year: "2010, 2015, 2021", years: ["2010","2015","2021"], section: "Management Practices", question: "Who was aware of the production targets at this establishment? (Only senior managers / Most managers and some production workers / Most managers and most production workers / All managers and most production workers)" },
+  { id: "mops-incentives-1", survey: "MOPS", year: "2010, 2015, 2021", years: ["2010","2015","2021"], section: "Incentives", question: "What were non-managers' performance bonuses usually based on at this establishment? (Own performance / Team or shift performance / Establishment performance / Company performance / No performance bonuses)" },
+  { id: "mops-incentives-2", survey: "MOPS", year: "2010, 2015, 2021", years: ["2010","2015","2021"], section: "Incentives", question: "When production targets were met, what percent of non-managers at this establishment received performance bonuses? (0% / 1–33% / 34–66% / 67–99% / 100% / Targets not met)" },
+  { id: "mops-incentives-3", survey: "MOPS", year: "2010, 2015, 2021", years: ["2010","2015","2021"], section: "Incentives", question: "What were managers' performance bonuses usually based on at this establishment? (Own performance / Team performance / Establishment performance / Company performance / No performance bonuses)" },
+  { id: "mops-incentives-4", survey: "MOPS", year: "2010, 2015, 2021", years: ["2010","2015","2021"], section: "Incentives", question: "When production targets were met, what percent of managers at this establishment received performance bonuses?" },
+  { id: "mops-promotion-1", survey: "MOPS", year: "2010, 2015, 2021", years: ["2010","2015","2021"], section: "Promotions & Dismissals", question: "What was the primary way non-managers were promoted at this establishment? (Solely on performance and ability / Partly on performance, partly other factors / Mainly on other factors / Not normally promoted)" },
+  { id: "mops-promotion-2", survey: "MOPS", year: "2010, 2015, 2021", years: ["2010","2015","2021"], section: "Promotions & Dismissals", question: "What was the primary way managers were promoted at this establishment?" },
+  { id: "mops-promotion-3", survey: "MOPS", year: "2010, 2015, 2021", years: ["2010","2015","2021"], section: "Promotions & Dismissals", question: "When was an under-performing non-manager reassigned or dismissed at this establishment? (Within 6 months / After 6 months / Rarely or never)" },
+  { id: "mops-promotion-4", survey: "MOPS", year: "2010, 2015, 2021", years: ["2010","2015","2021"], section: "Promotions & Dismissals", question: "When was an under-performing manager reassigned or dismissed at this establishment?" },
+  { id: "mops-org-1", survey: "MOPS", year: "2010, 2015, 2021", years: ["2010","2015","2021"], section: "Organization & Decentralization", question: "Was the headquarters for this company at the same location as this establishment?" },
+  { id: "mops-org-2", survey: "MOPS", year: "2010, 2015, 2021", years: ["2010","2015","2021"], section: "Organization & Decentralization", question: "Where were decisions on hiring permanent full-time employees made? (Only at this establishment / Only at headquarters / Both)" },
+  { id: "mops-org-3", survey: "MOPS", year: "2010, 2015, 2021", years: ["2010","2015","2021"], section: "Organization & Decentralization", question: "Where were decisions to give an employee a pay increase of at least 10% made?" },
+  { id: "mops-org-4", survey: "MOPS", year: "2010, 2015, 2021", years: ["2010","2015","2021"], section: "Organization & Decentralization", question: "Where were decisions on new product introductions made?" },
+  { id: "mops-org-5", survey: "MOPS", year: "2010, 2015, 2021", years: ["2010","2015","2021"], section: "Organization & Decentralization", question: "Where were product pricing decisions made?" },
+  { id: "mops-org-6", survey: "MOPS", year: "2010, 2015, 2021", years: ["2010","2015","2021"], section: "Organization & Decentralization", question: "Where were advertising decisions for products made?" },
+  { id: "mops-org-7", survey: "MOPS", year: "2010, 2015, 2021", years: ["2010","2015","2021"], section: "Organization & Decentralization", question: "What was the dollar amount that could be used to purchase a fixed/capital asset without prior authorization from headquarters? (Under $1,000 / $1,000–$9,999 / $10,000–$99,999 / $100,000–$999,999 / $1 million or more)" },
+  { id: "mops-data-1", survey: "MOPS", year: "2010, 2015, 2021", years: ["2010","2015","2021"], section: "Data & Decision Making", question: "What best describes the availability of data to support decision making at this establishment? (Not available / Small amount / Moderate amount / Great deal / All data needed)" },
+  { id: "mops-data-2", survey: "MOPS", year: "2010, 2015, 2021", years: ["2010","2015","2021"], section: "Data & Decision Making", question: "What best describes the use of data to support decision making at this establishment? (Does not use data / Relies slightly / Relies moderately / Relies heavily / Relies entirely on data)" },
+  { id: "mops-workforce-2", survey: "MOPS", year: "2010, 2015, 2021", years: ["2010","2015","2021"], section: "Workforce Characteristics", question: "What was the percent of managers at this establishment with a bachelor's degree? (20% or less / 21–40% / 41–60% / 61–80% / More than 80%)" },
+  { id: "mops-workforce-3", survey: "MOPS", year: "2010, 2015, 2021", years: ["2010","2015","2021"], section: "Workforce Characteristics", question: "What was the percent of non-managers at this establishment with a bachelor's degree? (0% / 1–10% / 11–20% / More than 20%)" },
+  { id: "mops-workforce-4", survey: "MOPS", year: "2010, 2015, 2021", years: ["2010","2015","2021"], section: "Workforce Characteristics", question: "What percent of all employees at this establishment were members of a labor union?" },
+  // 2010 + 2015 only
+  { id: "mops-org-8", survey: "MOPS", year: "2010, 2015", years: ["2010","2015"], section: "Organization & Decentralization", question: "What was the number of employees reporting directly to the plant manager at this establishment?" },
+  { id: "mops-org-9", survey: "MOPS", year: "2010, 2015", years: ["2010","2015"], section: "Organization & Decentralization", question: "How many layers of direct reports were there in this establishment from the factory floor to the plant manager, inclusive?" },
+  { id: "mops-org-10", survey: "MOPS", year: "2010, 2015", years: ["2010","2015"], section: "Organization & Decentralization", question: "Who prioritized or allocated tasks to production workers at this establishment? (Only managers / Mostly managers / Managers and workers jointly / Mostly workers / Only workers)" },
+  { id: "mops-workforce-1", survey: "MOPS", year: "2010, 2015", years: ["2010","2015"], section: "Workforce Characteristics", question: "What was the number of managers at this establishment for the survey reference pay period?" },
+  // 2010 only
+  { id: "mops10-data-3", survey: "MOPS", year: "2010", years: ["2010"], section: "Data & Decision Making", question: "In 2005 and 2010, did the managers at this establishment learn about management practices from any of the following? (Consultants / Competitors / Suppliers / Customers / Trade associations or conferences / New employees / Headquarters / None)" },
+  { id: "mops10-workforce-2", survey: "MOPS", year: "2010", years: ["2010"], section: "Workforce Characteristics", question: "What was the number of all full and part-time employees at this establishment for the pay periods including March 12, 2005 and March 12, 2010?" },
+  { id: "mops10-workforce-5", survey: "MOPS", year: "2010", years: ["2010"], section: "Workforce Characteristics", question: "In 2005 and 2010, what percent of all employees at this establishment were members of a labor union?" },
+  // 2015 only
+  { id: "mops15-data-3", survey: "MOPS", year: "2015", years: ["2015"], section: "Data & Decision Making", question: "In 2010 and 2015, who chose what type of data to collect at this establishment? (Managers at this establishment / Managers at headquarters / Production workers / Engineers / Customers / Government regulations or agencies)" },
+  { id: "mops15-data-4", survey: "MOPS", year: "2015", years: ["2015"], section: "Data & Decision Making", question: "In 2015, how frequently were the following data sources used in decision making? (Performance indicators from production technology / Feedback from managers / Feedback from production workers / Data from outside the firm)" },
+  { id: "mops15-data-5", survey: "MOPS", year: "2015", years: ["2015"], section: "Data & Decision Making", question: "In 2015, how frequently was each of these activities influenced by data analysis? (Design of new products or services / Demand forecasting / Supply chain management)" },
+  { id: "mops15-data-6", survey: "MOPS", year: "2015", years: ["2015"], section: "Data & Decision Making", question: "In 2010 and 2015, how frequently did this establishment rely on predictive analytics (statistical models for demand, production, or HR forecasting)?" },
+  { id: "mops15-ownership-1", survey: "MOPS", year: "2015", years: ["2015"], section: "Ownership", question: "Is this establishment owned 50% or more by its founder(s) or member(s) of a founder's family? If yes, is the CEO of the firm also a founder or member of a founder's family?" },
+  { id: "mops15-workforce-5", survey: "MOPS", year: "2015", years: ["2015"], section: "Workforce Characteristics", question: "In 2010 and 2015, what percent of all employees at this establishment could be classified as: part-time / working flexible hours / working from home one day or more per week / cross-trained?" },
+  // 2021 only
+  { id: "mops21-org-3", survey: "MOPS", year: "2021", years: ["2021"], section: "Organization & Decentralization", question: "In 2021, where were decisions to use own employees, contractors, temporary staff, or leased workers for cleaning, physical security, and direct production made?" },
+  { id: "mops21-workforce-1", survey: "MOPS", year: "2021", years: ["2021"], section: "Workforce Characteristics", question: "What was the number of managers at this establishment for the pay period including March 12, 2021?" },
+  { id: "mops21-workforce-5", survey: "MOPS", year: "2021", years: ["2021"], section: "Workforce Characteristics", question: "In 2021, which of the following best described the production of this establishment? (Job shop / Batch production / Continuous flow / R&D or prototyping / Cellular manufacturing)" },
+  { id: "mops21-costs-1", survey: "MOPS", year: "2021", years: ["2021"], section: "Costs & Purchased Services", question: "In 2021 and 2019, what were this establishment's expenses for cleaning and janitorial services? (Payroll for own employees / Contractors, temporary staff, and leased workers)" },
+  { id: "mops21-costs-2", survey: "MOPS", year: "2021", years: ["2021"], section: "Costs & Purchased Services", question: "In 2021 and 2019, what were this establishment's expenses for repairs and maintenance?" },
+  { id: "mops21-costs-3", survey: "MOPS", year: "2021", years: ["2021"], section: "Costs & Purchased Services", question: "In 2021 and 2019, what were this establishment's expenses for physical security services, including personnel (guards) and monitoring services?" },
+  { id: "mops21-costs-4", survey: "MOPS", year: "2021", years: ["2021"], section: "Costs & Purchased Services", question: "In 2021 and 2019, what were this establishment's expenses for transportation, logistics, and distribution services?" },
+  { id: "mops21-costs-5", survey: "MOPS", year: "2021", years: ["2021"], section: "Costs & Purchased Services", question: "In 2021 and 2019, what were this establishment's expenses for direct production? (Including work contracted to others on your materials)" },
+  { id: "mops21-data-1", survey: "MOPS", year: "2021", years: ["2021"], section: "Data & Decision Making", question: "In 2021, how much of the information related to each of the following functions was stored in digital format? (Production scheduling and monitoring / Quality control / Environmental or safety compliance / Equipment maintenance / Supply chain management / Sales forecasting)" },
+  { id: "mops21-data-2", survey: "MOPS", year: "2021", years: ["2021"], section: "Data & Decision Making", question: "In 2021, who decided what type of digital information (data) to collect for this establishment? (Managers at establishment / Managers at HQ / Production workers / Engineers / Customers / Government regulations / Consultants)" },
+  { id: "mops21-data-3", survey: "MOPS", year: "2021", years: ["2021"], section: "Data & Decision Making", question: "In 2021, what descriptive analyses of data were typically used to support making key decisions? (Summary statistics / Trends and comparisons over time / Real-time dashboards / Customized or interactive descriptive analysis)" },
+  { id: "mops21-data-4", survey: "MOPS", year: "2021", years: ["2021"], section: "Data & Decision Making", question: "In 2021 and 2019, how often did decision makers rely on descriptive analyses of data when making key decisions? (Did not use / Up to 50% of the time / More than 50% but not all / All or nearly all)" },
+  { id: "mops21-data-5", survey: "MOPS", year: "2021", years: ["2021"], section: "Data & Decision Making", question: "In 2021, what share of expenses for data processing and other purchased computer services was spent on cloud services? (None / Up to 50% / More than 50% but not all / All or nearly all)" },
+  { id: "mops21-data-6", survey: "MOPS", year: "2021", years: ["2021"], section: "Data & Decision Making", question: "In 2021, to what extent did this establishment use predictive analytics to support each of the following functions? (Production scheduling / Quality control / Environmental or safety compliance / Equipment maintenance / Supply chain management / Sales forecasting)" },
+  { id: "mops21-ai-1", survey: "MOPS", year: "2021", years: ["2021"], section: "Artificial Intelligence", question: "In 2021, to what extent did this establishment use artificial intelligence (including machine learning algorithms in software applications) to support each of the following functions? (Production scheduling and monitoring / Quality control / Environmental or safety compliance / Equipment maintenance / Supply chain management and logistics / Sales forecasting)" },
+  { id: "mops21-ai-2", survey: "MOPS", year: "2021", years: ["2021"], section: "Artificial Intelligence", question: "In 2021, to what extent did this establishment use the following technical applications of artificial intelligence? (Speech recognition / Predictive maintenance / AI-enabled industrial robots / Automated guided vehicles (AGV) / Machine vision)" },
+  { id: "mops21-ai-3", survey: "MOPS", year: "2021", years: ["2021"], section: "Artificial Intelligence", question: "In 2019, to what extent did this establishment use the following technical applications of artificial intelligence? (Speech recognition / Predictive maintenance / AI-enabled industrial robots / AGV / Machine vision)" },
+  { id: "mops21-ai-4", survey: "MOPS", year: "2021", years: ["2021"], section: "Artificial Intelligence", question: "In 2021, which of the following factors prevented or delayed the use of artificial intelligence at this establishment? (Difficulty identifying use cases / Uncertainty about regulations / Lack of AI expertise / Cost / Employee attitudes / None — AI widely used)" },
+  { id: "mops21-expectations-1", survey: "MOPS", year: "2021", years: ["2021"], section: "Expectations & Uncertainty", question: "For calendar years 2021 and 2022, what are the approximate dollar values of products shipped, including interplant transfers, exports, and other receipts?" },
+  { id: "mops21-expectations-2", survey: "MOPS", year: "2021", years: ["2021"], section: "Expectations & Uncertainty", question: "Looking ahead to the 2023 calendar year, what is the approximate dollar value of products shipped anticipated for this establishment across scenarios (lowest to highest), and what likelihood do you assign to each scenario?" },
+  { id: "mops21-expectations-3", survey: "MOPS", year: "2021", years: ["2021"], section: "Expectations & Uncertainty", question: "For the following dates, what was the total number of employees (full-time plus part-time) on the payroll at this establishment? (March 12, 2021 / March 12, 2022)" },
+  { id: "mops21-expectations-4", survey: "MOPS", year: "2021", years: ["2021"], section: "Expectations & Uncertainty", question: "Looking ahead to 2023, approximately how many employees would you anticipate on this establishment's payroll as of March 12, 2023 in the following scenarios?" },
+  { id: "mops21-audit-1", survey: "MOPS", year: "2021", years: ["2021"], section: "Audit & External Accountant", question: "In 2021, did your company retain an external Certified Public Accountant to conduct an audit, review, or compilation of its financial statements?" },
+  { id: "mops21-audit-2", survey: "MOPS", year: "2021", years: ["2021"], section: "Audit & External Accountant", question: "In 2021, did the external Certified Public Accountant visit this establishment in person or remotely in association with the company's audit, review, or compilation?" },
+  { id: "mops21-audit-3", survey: "MOPS", year: "2021", years: ["2021"], section: "Audit & External Accountant", question: "In 2021, which of the following activities did the external Certified Public Accountant conduct at this establishment? (Inventory control tests / Employee control tests / Expense control tests / Cash management tests / Accounts receivable control tests / Materials control tests)" },
+  // ── BERD 2024 ─────────────────────────────────────────────────────────────
+  { id: "berd24-1-1", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Company Information", question: "Has your company ceased operations?" },
+  { id: "berd24-1-2", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Company Information", question: "Did another U.S. company own more than 50% of the voting interest in your company during 2024? (Including whether the parent is a holding company or private equity firm)" },
+  { id: "berd24-1-3", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Company Information", question: "Will the information in this survey be reported for the 2024 calendar year?" },
+  { id: "berd24-1-4", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Company Information", question: "Was your company a majority-owned subsidiary of a foreign company in 2024?" },
+  { id: "berd24-1-5", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Company Information", question: "Did your company own more than 50 percent of any company operations or subsidiaries outside the 50 United States and D.C. during 2024?" },
+  { id: "berd24-1-6", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Company Information", question: "Did your company have discontinued operations in 2024?" },
+  { id: "berd24-1-8", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Company Information", question: "What was the total number of your company's employees worldwide for the pay period that included March 12, 2024? (Full- and part-time employees, excluding leased/temporary/consultants)" },
+  { id: "berd24-1-9", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Company Information", question: "How many of the employees were in domestic operations vs. foreign operations?" },
+  { id: "berd24-1-10", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Company Information", question: "Please describe your company's primary business activity during 2024." },
+  { id: "berd24-1-11", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Company Information", question: "List all applicable business codes in which your company operated worldwide in 2024." },
+  { id: "berd24-1-12", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Company Information", question: "What was the amount of your company's worldwide sales and revenues for the year 2024?" },
+  { id: "berd24-1-13", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Company Information", question: "How much of the worldwide sales and revenues was attributable to or originated from domestic operations?" },
+  { id: "berd24-1-14", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Company Information", question: "How much of the 2024 sales and operating revenue was for each business code, broken down by worldwide vs. domestic operations?" },
+  { id: "berd24-2-1", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "R&D Paid For by Company", question: "What was the worldwide R&D expense (both direct and indirect) for your company in 2024? (Equivalent to SEC Form 10-K amount per FASB ASC Topic 730)" },
+  { id: "berd24-2-2", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "R&D Paid For by Company", question: "Does the reported R&D expense include any of the following costs? (Collaborative R&D reimbursed by partners / R&D paid by grants / Customer-sponsored R&D / Technical services not integral to R&D / Bid and proposal costs / In-process R&D acquisition / Phase IV clinical trials)" },
+  { id: "berd24-2-4", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "R&D Paid For by Company", question: "What is the total R&D paid for by your company in 2024? (Worldwide R&D expense minus excluded costs)" },
+  { id: "berd24-2-5", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "R&D Paid For by Company", question: "How much of the R&D paid for by your company was for costs your company plans to recoup through indirect charges on U.S. federal government contracts (IR&D or independent R&D)?" },
+  { id: "berd24-2-6", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "R&D Paid For by Company", question: "Of total R&D paid for by your company, what were the costs for each business code?" },
+  { id: "berd24-2-7", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "R&D Paid For by Company", question: "Of total R&D paid for by your company, what costs were incurred in: Domestic United States vs. all other countries?" },
+  { id: "berd24-2-8", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "R&D Paid For by Company", question: "How much of domestic, foreign, and worldwide R&D paid for by your company was for each of the following cost types? (Salaries/wages/fringe benefits / Stock-based compensation / Leased employees and temp staffing / Expensed equipment / Materials and supplies / Leased facilities and equipment / Depreciation and amortization / Royalties and licensing fees / Collaborative R&D payments / Contract R&D / Other purchased services / All other costs)" },
+  { id: "berd24-2-11", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "R&D Paid For by Company", question: "Of the foreign R&D performed by your company, how much was performed in each country/region? (Canada / Puerto Rico / Europe by country / Latin America / Asia and Pacific by country / Middle East / Africa)" },
+  { id: "berd24-2-12", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "R&D Paid For by Company", question: "How much of domestic R&D performed by your company was performed in each U.S. state (including D.C.) in 2024?" },
+  { id: "berd24-2-13", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "R&D Paid For by Company", question: "At what domestic location did your company perform the largest dollar amount of R&D in 2024?" },
+  { id: "berd24-2-17", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "R&D Paid For by Company", question: "Of domestic R&D performed by your company, how much was for each business code?" },
+  { id: "berd24-2-18", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "R&D Paid For by Company", question: "How much of domestic R&D performed by your company was paid for by your company's foreign subsidiaries?" },
+  { id: "berd24-2-19", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "R&D Paid For by Company", question: "How much of foreign R&D performed by your company was paid for by your company's domestic operations?" },
+  { id: "berd24-2-20", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "R&D Paid For by Company", question: "What are your company's projected 2025 costs for domestic, foreign, and worldwide R&D paid for by your company?" },
+  { id: "berd24-3-1", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "R&D Paid For by Others", question: "What were your company's worldwide costs in 2024 for activities funded, paid for, or reimbursed by others? (Collaborative R&D reimbursed by partners / R&D paid by grants / Defense R&D for government / Medical clinical trials Phase I–III / Medical R&D services / Nondefense custom software for others / Prototype development for customers / All other R&D services for others)" },
+  { id: "berd24-3-2", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "R&D Paid For by Others", question: "Of total R&D paid for by others, what costs were incurred in domestic U.S. vs. all other countries?" },
+  { id: "berd24-3-3", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "R&D Paid For by Others", question: "How much of domestic, foreign, and worldwide R&D paid for by others was for each cost type? (Salaries / Stock-based compensation / Leased employees / Equipment / Materials / Leased facilities / Depreciation / Royalties / Collaborative R&D / Contract R&D / Other purchased services / All other costs)" },
+  { id: "berd24-3-7", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "R&D Paid For by Others", question: "Of domestic R&D performed by your company that was paid for by others, how much was for each business code?" },
+  { id: "berd24-3-8", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "R&D Paid For by Others", question: "How much of domestic R&D performed by your company was paid for by each source? (Other U.S. companies / Foreign parent / Other foreign companies / U.S. federal government / U.S. state and local government / Foreign government / U.S. universities / Foreign universities / All other inside U.S. / All other outside U.S.)" },
+  { id: "berd24-3-11", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "R&D Paid For by Others", question: "How much of domestic R&D paid for by others was performed in each U.S. state, broken down by federal vs. nonfederal funding?" },
+  { id: "berd24-3-17", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "R&D Paid For by Others", question: "What are your company's projected 2025 costs for R&D that will be paid for by others?" },
+  { id: "berd24-3-18", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "R&D Paid For by Others", question: "How much of projected 2025 R&D paid for by others will be performed by your company in the United States?" },
+  { id: "berd24-3-19", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "R&D Paid For by Others", question: "How much of projected 2025 domestic R&D performed by your company will be paid for by the U.S. federal government?" },
+  { id: "berd24-4-1", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Assets", question: "What was the net worldwide value of assets owned or leased by your company at end of 2024? (Property, plant, and equipment / Goodwill / Identifiable intangible assets)" },
+  { id: "berd24-4-2", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Assets", question: "What were your company's worldwide expenditures for capitalized assets in 2024? (Property, plant, and equipment / Identifiable intangible assets)" },
+  { id: "berd24-4-3", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Assets", question: "How much of the expenditures for capitalized assets were for assets deployed in domestic U.S. vs. foreign locations?" },
+  { id: "berd24-4-4", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Assets", question: "Of domestic capital expenditures, how much was for R&D operations? (Property, plant, and equipment / Identifiable intangible assets)" },
+  { id: "berd24-4-5", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Assets", question: "How much of domestic capital expenditures for R&D operations was for: Land acquisition / Buildings and land improvement / Machinery and equipment / Capitalized software / Other intellectual property / All other capital expenditures?" },
+  { id: "berd24-5-1", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "R&D Management & Strategy", question: "What percentage of total R&D paid for by your company was directed toward business areas or product lines that are new to your company?" },
+  { id: "berd24-5-3", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "R&D Management & Strategy", question: "How much of domestic R&D paid for and performed by your company was for: Research (planned, systematic pursuit of new knowledge) vs. Development (systematic work directed to producing new products or processes)?" },
+  { id: "berd24-5-4", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "R&D Management & Strategy", question: "Of domestic research, how much was for: Basic research (no specific immediate commercial application) vs. Applied research (aimed at solving a specific problem or commercial objective)?" },
+  { id: "berd24-5-5", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "R&D Management & Strategy", question: "What percentage of domestic R&D paid for and performed by your company was for software products or software embedded in other projects or products?" },
+  { id: "berd24-5-6", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "R&D Management & Strategy", question: "What percentage of domestic R&D paid for and performed by your company was for biotechnology? (The application of science and technology to living organisms to produce knowledge, goods and services)" },
+  { id: "berd24-5-7", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "R&D Management & Strategy", question: "What percentage of domestic R&D paid for and performed by your company was for nanotechnology? (Application of science and technology at the nanometer-scale)" },
+  { id: "berd24-5-8", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "R&D Management & Strategy", question: "What percentage of domestic R&D paid for and performed by your company was for artificial intelligence (AI)? (A branch of computer science devoted to making machines intelligent)" },
+  { id: "berd24-5-12", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "R&D Management & Strategy", question: "How much of domestic R&D performed by your company and paid for by others was for: Research vs. Development?" },
+  { id: "berd24-5-13", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "R&D Management & Strategy", question: "Of domestic research paid for by others, how much was Basic research vs. Applied research?" },
+  { id: "berd24-5-14", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "R&D Management & Strategy", question: "What percentage of domestic R&D performed by your company and paid for by others was for software products or embedded software?" },
+  { id: "berd24-5-15", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "R&D Management & Strategy", question: "What percentage of domestic R&D performed by your company and paid for by others was for biotechnology?" },
+  { id: "berd24-5-16", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "R&D Management & Strategy", question: "What percentage of domestic R&D performed by your company and paid for by others was for nanotechnology?" },
+  { id: "berd24-5-17", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "R&D Management & Strategy", question: "What percentage of domestic R&D performed by your company and paid for by others was for artificial intelligence (AI)?" },
+  { id: "berd24-5-19", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "R&D Management & Strategy", question: "How much of domestic R&D paid for by the U.S. federal government was for: Research vs. Development?" },
+  { id: "berd24-5-20", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "R&D Management & Strategy", question: "Of domestic research paid for by the federal government, how much was Basic research vs. Applied research?" },
+  { id: "berd24-5-21", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "R&D Management & Strategy", question: "What percentage of domestic R&D paid for by the U.S. federal government was for software products or embedded software?" },
+  { id: "berd24-6-1", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Human Resources", question: "How many employees were R&D employees vs. all other employees, for domestic and foreign operations? (R&D employees include researchers, R&D managers, technicians, clerical staff assigned to R&D groups)" },
+  { id: "berd24-6-2", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Human Resources", question: "How many domestic R&D employees and total employees were employed in each U.S. state (including D.C.)?" },
+  { id: "berd24-6-3", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Human Resources", question: "How many foreign R&D employees and total employees were employed in each country/region?" },
+  { id: "berd24-6-4", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Human Resources", question: "How many of the R&D employees were female employees vs. male employees, for domestic and foreign operations?" },
+  { id: "berd24-6-5", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Human Resources", question: "How many R&D employees worked in each occupation? (Researchers including R&D scientists, engineers, and managers / R&D technicians and equivalent staff / R&D support staff — clerical and other)" },
+  { id: "berd24-6-6", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Human Resources", question: "How many researchers had a PhD (excluding MD, JD, and EdD), for domestic and foreign operations?" },
+  { id: "berd24-6-7", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Human Resources", question: "Of domestic R&D employees, what was the number of full-time equivalents (FTEs) for R&D activity? (FTEs for full-time R&D employees / FTEs for other full-time employees not working solely on R&D / FTEs for part-time employees working on R&D)" },
+  { id: "berd24-6-8", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Human Resources", question: "Of domestic researchers, what was the number of full-time equivalents (FTEs) for R&D activity?" },
+  { id: "berd24-6-9", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Human Resources", question: "How many domestic researchers were non-U.S. citizens employed under a temporary visa (such as H-1B or L-1)?" },
+  { id: "berd24-6-10", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Human Resources", question: "In addition to R&D employees, how many leased employees and temporary staff (including on-site consultants) worked in R&D occupations? (Researchers / R&D technicians / R&D support staff)" },
+  { id: "berd24-7-1", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Intellectual Property & Technology Transfer", question: "How many total patents did your company apply for in 2024 from the U.S. Patent and Trademark Office (USPTO)?" },
+  { id: "berd24-7-2", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Intellectual Property & Technology Transfer", question: "Of the patent applications, what was the number of nonprovisional utility patent applications?" },
+  { id: "berd24-7-3", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Intellectual Property & Technology Transfer", question: "What percentage of nonprovisional utility patent applications has your company applied for or plans to apply for in foreign jurisdictions?" },
+  { id: "berd24-7-4", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Intellectual Property & Technology Transfer", question: "What percentage of nonprovisional utility patent applications was for inventions that originated within your company's organized R&D activities?" },
+  { id: "berd24-7-5", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Intellectual Property & Technology Transfer", question: "What percentage of your company's inventions considered for patenting in 2024 resulted in nonprovisional utility patent applications?" },
+  { id: "berd24-7-6", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Intellectual Property & Technology Transfer", question: "How many utility patents were issued to your company in 2024 by the USPTO?" },
+  { id: "berd24-7-7", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Intellectual Property & Technology Transfer", question: "How much revenue did your company receive in 2024 from the sale of utility patents?" },
+  { id: "berd24-7-8", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Intellectual Property & Technology Transfer", question: "How much revenue did your company receive in 2024 from utility patent licensing?" },
+  { id: "berd24-7-9", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Intellectual Property & Technology Transfer", question: "Was any revenue from patent sales or licensing received from companies or organizations located outside the United States?" },
+  { id: "berd24-7-10", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Intellectual Property & Technology Transfer", question: "How much did your company pay others in 2024 to purchase utility patents?" },
+  { id: "berd24-7-11", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Intellectual Property & Technology Transfer", question: "How much did your company pay others in 2024 to license utility patents?" },
+  { id: "berd24-7-12", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Intellectual Property & Technology Transfer", question: "Were any payments for patent purchases or licensing made to companies or organizations located outside the United States?" },
+  { id: "berd24-7-13", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Intellectual Property & Technology Transfer", question: "Did your company perform any of the following IP transfer activities in 2024? (Transferred IP via technical assistance / Received IP from others / Transferred IP to a spin-off / Received IP from a parent spin-off / Acquired company primarily for IP / Acquired financial interest for IP access / Cross-licensing agreements / Allowed free use of patents or open source / Used open source patents)" },
+  { id: "berd24-7-14", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Intellectual Property & Technology Transfer", question: "During 2024, how important to your company were the following types of intellectual property protection? (Utility patents / Design patents / Trademarks / Copyrights / Trade secrets / Mask works for semiconductor products)" },
+  { id: "berd24-8-1", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Tax Topics", question: "Did your company file for the tax credit for increasing research activities (IRS Form 6765) in 2024?" },
+  { id: "berd24-8-2", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Tax Topics", question: "Did your company file for any U.S. state tax credit for research activities in 2024?" },
+  { id: "berd24-8-3", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Tax Topics", question: "Was your company charged for R&D performed by foreign subsidiaries in 2024 as part of any cost sharing arrangement?" },
+  { id: "berd24-8-4", survey: "BERD (Business Enterprise R&D Survey)", year: "2024", section: "Tax Topics", question: "Did your company charge foreign subsidiaries for R&D your company performed in 2024 as part of any cost sharing arrangement?" },
+  // ── Annual Survey of Manufactures (ASM) 2018–2021 ───────────────────────
+  // Shared across all years and both form types (multi- and single-establishment)
+  // unless noted. Year tags indicate form availability.
+  { id: "asm-3", survey: "Annual Survey of Manufactures (ASM)", year: "2018–2021", section: "Operational Status", question: "Which of the following best describes this establishment's operational status at the end of the survey year? (In operation / Under construction, development, or exploration / Temporarily or seasonally inactive / Ceased operation / Sold or leased to another operator) If ceased or sold, report date and new owner name, address, and EIN." },
+  { id: "asm-4", survey: "Annual Survey of Manufactures (ASM)", year: "2018–2021", section: "Operational Status", question: "What was the number of months in operation during the survey year?" },
+  { id: "asm-5a", survey: "Annual Survey of Manufactures (ASM)", year: "2018–2021", section: "Sales & Revenue", question: "What was the total value of products shipped and other receipts for this establishment during the survey year? (Includes donated products shipped in 2020–2021; excludes freight charges and excise taxes. Report detail by product in Item 22.)" },
+  { id: "asm-5b-mu", survey: "Annual Survey of Manufactures (ASM)", year: "2018–2019", section: "Sales & Revenue", question: "What was the market value of products shipped to other domestic plants of your company for further assembly, fabrication, or manufacture? (Multi-establishment companies only; includes a reasonable portion of overhead and profits; excludes products sold through company sales offices to outside customers.)" },
+  { id: "asm-5b-eship", survey: "Annual Survey of Manufactures (ASM)", year: "2018–2021", section: "Sales & Revenue", question: "What percent of total sales/shipments/receipts was for goods ordered or whose movement was controlled over electronic networks (e-shipments)? Includes Electronic Data Interchange (EDI), e-mail, Internet, extranet, and other online systems." },
+  { id: "asm-5c-backlog", survey: "Annual Survey of Manufactures (ASM)", year: "2021", section: "Sales & Revenue", question: "Did this establishment have any unfilled orders (order backlog) as of December 31? If yes, what was the value of unfilled orders as of December 31? (Includes all unshipped orders, future bookings, and commitments under long-standing agreements.)" },
+  { id: "asm-7a", survey: "Annual Survey of Manufactures (ASM)", year: "2018–2021", section: "Employment & Payroll", question: "What was the total number of employees at this establishment for the pay period including March 12? (Includes full- and part-time employees on IRS Form 941; excludes leased employees, temp staffing, subcontractors, and agricultural/military employees.)" },
+  { id: "asm-7b", survey: "Annual Survey of Manufactures (ASM)", year: "2018–2021", section: "Employment & Payroll", question: "What was the number of production workers (direct labor including first-line supervisors) at this establishment for the pay period including March 12, June 12, September 12, and December 12? (Includes fabricating, processing, assembling, inspecting, packing, warehousing, maintenance, janitorial, and guard services workers.)" },
+  { id: "asm-7c", survey: "Annual Survey of Manufactures (ASM)", year: "2018–2021", section: "Employment & Payroll", question: "What was the number of non-production employees (officers, supervision above line-supervisor level, sales, advertising, clerical, finance, legal, executive, and technical employees) for the pay period including March 12?" },
+  { id: "asm-7d-hours", survey: "Annual Survey of Manufactures (ASM)", year: "2018–2021", section: "Employment & Payroll", question: "What was the annual number of hours actually worked by production workers at this establishment? (Excludes hours paid for vacations, holidays, or sick leave; overtime reported as actual hours worked.)" },
+  { id: "asm-7e-payroll", survey: "Annual Survey of Manufactures (ASM)", year: "2018–2021", section: "Employment & Payroll", question: "What was the annual payroll (before deductions) for production workers and non-production employees separately, and total? What was the first quarter payroll (January–March)?" },
+  { id: "asm-7f-fringe", survey: "Annual Survey of Manufactures (ASM)", year: "2018–2021", section: "Fringe Benefits", question: "What were the employer's annual costs at this establishment for: (1) Health insurance (premiums for medical, dental, vision, prescription plans); (2) Retirement plans — defined benefit pension plans and defined contribution plans (profit sharing, 401k, 403b, ESOPs); (3) Payroll taxes and other employer-paid benefits (Social Security, workers' compensation, disability, Medicare, life insurance, childcare, education assistance, stock options, wellness programs, etc.)?" },
+  { id: "asm-9", survey: "Annual Survey of Manufactures (ASM)", year: "2018–2021", section: "Inventories", question: "What was the value of inventories owned by this establishment as of December 31 (before LIFO adjustment) for: (A) Finished goods; (B) Work-in-process; (C) Materials, supplies, and fuels?" },
+  { id: "asm-10", survey: "Annual Survey of Manufactures (ASM)", year: "2018–2021", section: "Inventories", question: "Of total inventories, how much is subject to each valuation method: FIFO (First-In, First-Out); Average Cost; Standard Cost; other non-LIFO methods; and LIFO (Last-In, First-Out, gross amount)? What is the amount of any LIFO reserve?" },
+  { id: "asm-13", survey: "Annual Survey of Manufactures (ASM)", year: "2018–2021", section: "Capital Expenditures", question: "What were capital expenditures for new and used depreciable assets during the survey year for: (A) Buildings and other structures (excluding land); (B) Machinery and equipment — broken out as (1) automobiles and trucks for highway use, (2) computers and peripheral data processing equipment, (3) all other machinery and equipment?" },
+  { id: "asm-14", survey: "Annual Survey of Manufactures (ASM)", year: "2018–2021", section: "Rental Payments", question: "What were payments for operating leases (excluding capital leases) at this establishment for: (A) Rental or lease of buildings and other structures (including job-site trailers and land); (B) Rental or lease of machinery and equipment (including production, office, construction, and transportation equipment)?" },
+  { id: "asm-16a", survey: "Annual Survey of Manufactures (ASM)", year: "2018–2021", section: "Selected Expenses", question: "What were production-related costs for: (1) Materials, parts, containers, packaging, and operating supplies; (2) Products bought and sold without further processing; (3) Work contracted to others on establishment's materials; (4) Purchased fuels (for heat, power, or electricity generation); (5) Purchased electricity? Also report quantities (kilowatt hours) of purchased, generated, and sold electricity." },
+  { id: "asm-16c", survey: "Annual Survey of Manufactures (ASM)", year: "2018–2021", section: "Selected Expenses", question: "What were other (non-production) operating expenses paid to outside companies for: (1) Temporary staff and leased employees; (2) Expensed equipment (hardware not capitalized); (3) Expensed software purchases (prepackaged, custom-coded, vendor-customized); (4) Purchased communication services (telephone, cellular, internet, fax); (5) Data processing and other computer services; (6) Purchased repairs and maintenance; (7) Water, sewer, refuse removal, and non-electric utilities; (8) Purchased advertising and promotional services; (9) Purchased professional and technical services (consulting, accounting, legal, engineering, etc.); (10) Governmental taxes and licensing fees; (11) All other operating expenses?" },
+  { id: "asm-17", survey: "Annual Survey of Manufactures (ASM)", year: "2018–2021", section: "Principal Activity", question: "Which ONE of the following best describes this establishment's principal (or primary) kind of business or activity during the survey year? (Select NAICS-based industry code; provide description if no match.)" },
+  { id: "asm-22", survey: "Annual Survey of Manufactures (ASM)", year: "2018–2021", section: "Sales & Revenue", question: "Of total sales/shipments/receipts reported in Item 5, what was the value for each product or service? (Report at net selling value FOB plant, after discounts. Includes products made by others from your materials and intercompany transfers at full market value. Excludes resales, products made from customer-owned materials, freight, and excise taxes.)" },
+  { id: "asm-28", survey: "Annual Survey of Manufactures (ASM)", year: "2018–2021", section: "Industrial Robots", question: "For industrial robotic equipment (automatically controlled, reprogrammable, multipurpose machines used in industrial automated operations): (A) What were capital expenditures for new and used industrial robots including software, installation, and other one-time costs? (B) What was the number of industrial robots in operation at this plant? (C) What was the number of industrial robots purchased for this plant? (Excludes AGVs, driverless forklifts, automated storage/retrieval systems, and CNC machines.)" },
+  // 2020-only items (COVID pandemic)
+  { id: "asm-29-donated", survey: "Annual Survey of Manufactures (ASM)", year: "2020", section: "Donated Products", question: "Did this establishment donate any products, for any reason, during 2020? If yes, what was the value of the donated products? (Value is a breakout of total sales/shipments reported in Item 5A.)" },
+  { id: "asm-30-covid", survey: "Annual Survey of Manufactures (ASM)", year: "2020", section: "COVID-19 Impact", question: "How many days by quarter during 2020 did your establishment close (cease production of goods) as a result of the coronavirus pandemic? (Report by quarter: Q1 January–March, Q2 April–June, Q3 July–September, Q4 October–December.)" },
+  // Single-establishment form only: ownership/control block
+  { id: "asm-2-ownership", survey: "Annual Survey of Manufactures (ASM)", year: "2018–2021", section: "Ownership (single-unit)", question: "Is your company owned or controlled by another domestic company? If yes: Does another company own more than 50% of voting stock? Does another company have power to control management and policies? What percent of voting stock is held by the owning company? What is the name, address, and EIN of the owning or controlling company?" },
+  { id: "asm-32", survey: "Annual Survey of Manufactures (ASM)", year: "2018–2021", section: "Establishment Count (single-unit)", question: "How many establishments operated under this EIN at the end of the survey year? For each establishment: report name, address, kind of business, number of employees (pay period including March 12), annual payroll, first quarter payroll, and sales/shipments/receipts/revenue." },
+  // ── Annual Capital Expenditures Survey (ACES) 1995–1999 ──────────────────
+  // ACE-1 (employer companies) — Items shared across all years 1995–1999
+  { id: "aces-1a", survey: "Annual Capital Expenditures Survey (ACES)", year: "1995–2002", section: "Fixed Assets", question: "Did this enterprise own any fixed assets (depreciable assets) during the survey year? Report the following: gross value (original cost) at beginning of year; total capital expenditures; other additions and acquisitions (e.g., assets from mergers); gross value of retirements and dispositions; gross value at end of year; accumulated depreciation and amortization at end of year." },
+  { id: "aces-1b-capex", survey: "Annual Capital Expenditures Survey (ACES)", year: "1995–2002", section: "Capital Expenditures", question: "Did this enterprise make any capital expenditures during the survey year? (Capital expenditures include all capitalized costs for new and used structures and equipment, major alterations, construction-in-progress additions, capital lease assets, leasehold improvements, exploratory drilling, capitalized interest, and land development. Excludes maintenance, operating leases, intangible assets, and foreign operations.)" },
+  { id: "aces-2", survey: "Annual Capital Expenditures Survey (ACES)", year: "1995–2002", section: "Capital Expenditures", question: "Report total capital expenditures broken out by: (1) Structures — new and used buildings, land improvements, built-in machinery; (2) Equipment — machinery, vehicles, furniture, computers, office equipment; (3) Other — assets not classifiable as structures or equipment. For each category, report total, new, and used amounts separately." },
+  { id: "aces-3", survey: "Annual Capital Expenditures Survey (ACES)", year: "1995–2002", section: "Capital Expenditures", question: "List and report the value of any capital expenditures classified as 'Other' (assets that cannot be classified as structures or equipment)." },
+  { id: "aces-4", survey: "Annual Capital Expenditures Survey (ACES)", year: "1995–2002", section: "Capital Leases", question: "For new capital expenditures, report the estimated cost of assets acquired under capital lease arrangements entered into during the year. (Exclude operating lease payments and leasehold improvement costs.)" },
+  { id: "aces-5", survey: "Annual Capital Expenditures Survey (ACES)", year: "1995–2001", section: "Capital Expenditures", question: "Report the amount of capitalized interest incurred during the year to produce or construct assets reported as new capital expenditures." },
+  { id: "aces-5b", survey: "Annual Capital Expenditures Survey (ACES)", year: "2002", section: "Software Investment", question: "Report capital expenditures for computer software developed or obtained for internal use during the year, broken out by: (1) Prepackaged software; (2) Custom-made software; (3) Own-account software (developed in-house). Include total in Item 1A capital expenditures." },
+  { id: "aces-5c", survey: "Annual Capital Expenditures Survey (ACES)", year: "2003", section: "Software Investment", question: "Report capital expenditures for computer software developed or obtained for internal use during the year, broken out by: (1) Prepackaged software; (2) Vendor-customized software; (3) Internally-developed (own-account) software. Include total in Item 1A and Item 2 capital expenditures." },
+  { id: "aces-6", survey: "Annual Capital Expenditures Survey (ACES)", year: "1995–2002", section: "Capital Expenditures by Industry", question: "Report capital expenditures by industry category (SIC-based codes): for each industry in which the enterprise operated, report new and used structures, new and used equipment, and new and used other assets separately." },
+  // ACE-1 Item 1B — added in 1996, present through 1999
+  { id: "aces-1b-sales", survey: "Annual Capital Expenditures Survey (ACES)", year: "1996–2002", section: "Sales & Revenue", question: "Report total domestic sales, operating receipts, and revenue (including taxable sales and tax-exempt revenues). Also identify the three industries with the largest sales/receipts/revenue in which this company operates." },
+  // ACE-1 Items 7 & 8 — detailed asset-type supplement, 1998 only
+  { id: "aces-7", survey: "Annual Capital Expenditures Survey (ACES)", year: "1998, 2003", section: "Capital Expenditures by Type of Structure", question: "For each industry with expenditures on structures, report the value of capital expenditures by type of structure and method of acquisition: (1) Construction of new facility — by own employees or contract; (2) Acquisition of existing facility — new (previously owned but unoccupied) or used (previously occupied); (3) Remodeling, renovation, or modernization of existing facility — by own employees or contract; (4) Other." },
+  { id: "aces-8", survey: "Annual Capital Expenditures Survey (ACES)", year: "1998, 2003", section: "Capital Expenditures by Type of Equipment", question: "For each industry with expenditures on equipment, report the value of capital expenditures by equipment type code, broken out as new equipment, used equipment, and other." },
+  // ACE-2 (nonemployer/self-employed companies) — all years 1995–1999
+  { id: "aces-ace2-1", survey: "Annual Capital Expenditures Survey (ACES)", year: "1995–2002", section: "Capital Expenditures (nonemployer)", question: "Report total capital expenditures made during the year for this business. (For nonemployer and self-employed businesses including independent contractors, doctors, lawyers, real estate agents, and small employer companies. Includes structures and equipment for business use only; excludes land, maintenance, and operating expenses.)" },
+  { id: "aces-ace2-2", survey: "Annual Capital Expenditures Survey (ACES)", year: "1995–2002", section: "Capital Leases (nonemployer)", question: "Report the estimated cost of assets acquired under capital lease arrangements entered into during the year, broken out as: new structures; used structures; new equipment; used equipment. (Sum should equal total capital expenditures.)" },
+  // ── Economic Census 2022 ──────────────────────────────────────────────────
+  // ~800 industry-specific questionnaires (single-unit SU and multi-unit MU).
+  // Survey codes: MC- (Manufacturing), WH- (Wholesale), RT- (Retail),
+  // CB- (Construction), MN- (Mining), TR- (Transportation), IA- (Finance/
+  // Insurance/Real Estate/Services), AF- (Accommodation/Food Services), etc.
+  // Items marked "All sectors" appear across virtually all questionnaires.
+  // Items marked by sector appear only in those industry groups.
+  // ── Universal items (all sectors, SU and MU) ──────────────────────────────
+  { id: "ec22-1", survey: "Economic Census (2022)", year: "2022", section: "Operational Status", question: "Which of the following best describes this establishment's operational status at the end of 2022? (In operation / Under construction, development, or exploration / Temporarily or seasonally inactive / Ceased operation / Sold or leased to another operator / Other) If ceased, report date; if sold/leased, report date and new owner name, address, and EIN." },
+  { id: "ec22-2", survey: "Economic Census (2022)", year: "2022", section: "Operational Status", question: "What was the number of months in operation during 2022?" },
+  { id: "ec22-3", survey: "Economic Census (2022)", year: "2022", section: "Principal Activity", question: "Which ONE of the following best describes this establishment's primary kind of business or activity in 2022? (Select from NAICS-based activity codes specific to the establishment's industry; describe if no match.)" },
+  { id: "ec22-4", survey: "Economic Census (2022)", year: "2022", section: "Employment & Payroll", question: "What was the number of paid employees for the pay period including March 12, 2022? (Includes full- and part-time employees working at the establishment including those working from home; excludes leased employees, temp staffing, contractors, and purchased services.)" },
+  { id: "ec22-5", survey: "Economic Census (2022)", year: "2022", section: "Employment & Payroll", question: "What was the annual payroll (before deductions, excluding employer fringe benefit costs) for 2022? What was the first quarter payroll (January–March 2022)?" },
+  { id: "ec22-6", survey: "Economic Census (2022)", year: "2022", section: "Sales & Revenue", question: "What were the total sales, shipments, receipts, or revenue for this establishment in 2022? (Excludes sales taxes. Detailed breakout by product or service reported in Item 22.)" },
+  { id: "ec22-7", survey: "Economic Census (2022)", year: "2022", section: "Sales & Revenue", question: "Of the total sales/shipments/receipts/revenue, what was the value of each product or service? (Report at most detailed NAPCS-based product code level; include intercompany transfers at full market value; exclude freight charges, excise taxes, and resales.)" },
+  // ── Single-unit (SU) forms only ───────────────────────────────────────────
+  { id: "ec22-su-2a", survey: "Economic Census (2022)", year: "2022", section: "Ownership (single-unit)", question: "Is your company owned or controlled by another domestic company? If yes: Does another domestic company own more than 50% of voting stock? Does another company have power to control management and policies? What percent of voting stock is held by the owning company? What is the name, address, and EIN of the owning or controlling company?" },
+  { id: "ec22-su-2f", survey: "Economic Census (2022)", year: "2022", section: "Establishment Count (single-unit)", question: "How many establishments operated under this EIN at the end of 2022?" },
+  { id: "ec22-su-32", survey: "Economic Census (2022)", year: "2022", section: "Establishment Count (single-unit)", question: "For each establishment under this EIN: report name, address, kind of business, number of employees (pay period including March 12), annual payroll, first quarter payroll, and sales/shipments/receipts/revenue." },
+  { id: "ec22-su-12", survey: "Economic Census (2022)", year: "2022", section: "Ownership (single-unit)", question: "What legal form of organization best describes this establishment at the end of 2022? (Individual/sole proprietorship / Partnership / Cooperative organization / Corporation — private or public / Other) (Primarily finance, insurance, real estate, and services sector SU forms.)" },
+  // ── Manufacturing sector (MC- forms) ─────────────────────────────────────
+  { id: "ec22-mc-5b", survey: "Economic Census (2022)", year: "2022", section: "Sales & Revenue", question: "What percent of total sales/shipments was for goods ordered or whose movement was controlled over electronic networks (e-shipments)? Includes Electronic Data Interchange (EDI), e-mail, Internet, extranet, and other online systems." },
+  { id: "ec22-mc-7b", survey: "Economic Census (2022)", year: "2022", section: "Employment & Payroll", question: "For production workers at this establishment (direct labor including first-line supervisors engaged in fabricating, processing, assembling, inspecting, packing, warehousing, maintenance, repair, janitorial, and guard services): what was the number for pay period including March 12? Annual payroll? First quarter payroll?" },
+  { id: "ec22-mc-7c", survey: "Economic Census (2022)", year: "2022", section: "Employment & Payroll", question: "For non-production employees (officers, supervision above line-supervisor level, sales, advertising, clerical, finance, legal, executive, and technical employees): what was the number for pay period including March 12? Annual payroll? First quarter payroll?" },
+  { id: "ec22-mc-7d", survey: "Economic Census (2022)", year: "2022", section: "Employment & Payroll", question: "What was the annual number of hours actually worked by production workers at this establishment? (Excludes vacation, holiday, and sick leave hours; overtime reported as actual hours worked.)" },
+  { id: "ec22-mc-7e", survey: "Economic Census (2022)", year: "2022", section: "Fringe Benefits", question: "What were the employer's annual costs at this establishment for fringe benefits: (1) Health insurance premiums (medical, dental, vision, prescription plans); (2) Retirement plans — defined benefit pension plans and defined contribution plans (401k, 403b, profit sharing, ESOPs); (3) Payroll taxes and other employer-paid benefits (Social Security, Medicare, workers' compensation, disability insurance, life insurance, childcare assistance, education assistance, stock options, quality-of-life benefits)?" },
+  { id: "ec22-mc-9", survey: "Economic Census (2022)", year: "2022", section: "Inventories", question: "What was the value of inventories owned by this establishment as of December 31 (before LIFO adjustment) for: (A) Finished goods; (B) Work-in-process; (C) Materials, supplies, and fuels? Report prior year (December 31, 2021) figures in parallel columns." },
+  { id: "ec22-mc-10", survey: "Economic Census (2022)", year: "2022", section: "Inventories", question: "Of total inventories, how much is subject to each valuation method? (FIFO / Average Cost / Standard Cost / Other non-LIFO methods / LIFO gross amount) What is the amount of any LIFO reserve?" },
+  { id: "ec22-mc-13", survey: "Economic Census (2022)", year: "2022", section: "Capital Expenditures", question: "What was the gross value of depreciable assets at the beginning of 2022 for: buildings and structures; machinery and equipment? What were capital expenditures for new and used depreciable assets in 2022 for: buildings and structures; machinery and equipment (broken out as automobiles/trucks, computers/peripheral equipment, all other)? What were gross retirements? What was the gross value at end of year?" },
+  { id: "ec22-mc-14", survey: "Economic Census (2022)", year: "2022", section: "Rental Payments", question: "What were payments for operating leases (excluding capital leases) at this establishment for: (A) Rental or lease of buildings and other structures; (B) Rental or lease of machinery and equipment (including production, office, construction, transportation, and other equipment)?" },
+  { id: "ec22-mc-16a", survey: "Economic Census (2022)", year: "2022", section: "Selected Expenses", question: "What were production-related costs for: (1) Materials, parts, containers, packaging, and operating supplies; (2) Products bought and sold without further processing; (3) Contract work done by others on establishment's materials; (4) Purchased fuels for heat, power, or electricity generation; (5) Purchased electricity? Also report quantities (kilowatt hours) of purchased, generated, and sold/transferred electricity." },
+  { id: "ec22-mc-16d", survey: "Economic Census (2022)", year: "2022", section: "Selected Expenses", question: "What were other (non-production) operating expenses paid to outside companies for: (1) Temporary staff and leased employees; (2) Expensed equipment (hardware not capitalized); (3) Expensed software purchases (prepackaged, custom-coded, vendor-customized); (4) Purchased communication services (telephone, cellular, internet); (5) Data processing and other computer services; (6) Purchased repairs and maintenance; (7) Water, sewer, refuse removal, and non-electric utilities; (8) Purchased advertising and promotional services; (9) Purchased professional and technical services (consulting, accounting, legal, engineering, etc.); (10) Governmental taxes and licensing fees; (11) All other operating expenses?" },
+  { id: "ec22-mc-18", survey: "Economic Census (2022)", year: "2022", section: "Selected Expenses", question: "Of total materials, parts, and supplies costs (Item 16 line A1), what was the value for each specified material type? (Industry-specific material cost breakout at the NAPCS code level.)" },
+  // ── Technology questions (Manufacturing + many other sectors) ─────────────
+  { id: "ec22-tech-1", survey: "Economic Census (2022)", year: "2022", section: "Technology & Automation", question: "Did this establishment use industrial robots in its own operations in 2022? (Industrial robots are automatically controlled, reprogrammable, multipurpose machines used in industrial automated operations — e.g., palletizing, pick and place, welding, machine tending. Excludes AGVs, CNC machines, and service robots.) If yes: what were capital expenditures for industrial robots including software and installation? How many industrial robots were in operation? How many were purchased?" },
+  { id: "ec22-tech-2", survey: "Economic Census (2022)", year: "2022", section: "Technology & Automation", question: "Did this establishment use service robots in its own operations in 2022? (Service robots assist humans in non-industrial settings — e.g., medical, cleaning, delivery, construction/demolition, and field service robots such as mining or firefighting robots. Excludes industrial robots, AGVs/AMRs, and CNC machines.) If yes: what were capital expenditures? How many were in operation? How many were purchased?" },
+  { id: "ec22-tech-3", survey: "Economic Census (2022)", year: "2022", section: "Technology & Automation", question: "Did this establishment use automated guided vehicles (AGV) or autonomous mobile robots (AMR) in its own operations in 2022? (AGVs use sensor-based systems to navigate fixed routes including driverless forklifts; AMRs navigate without fixed routes.) If yes: what were capital expenditures? How many were in operation? How many were purchased? How were they acquired (purchased new, purchased used, leased, built in-house, other)?" },
+  { id: "ec22-tech-4", survey: "Economic Census (2022)", year: "2022", section: "Technology", question: "Did this establishment use additive manufacturing (e.g., 3D printing) in its own operations in 2022? (Additive manufacturing is the process of making three-dimensional solid objects from a digital file.) If yes: what were capital expenditures? How was it acquired?" },
+  { id: "ec22-tech-5", survey: "Economic Census (2022)", year: "2022", section: "Technology", question: "Did this establishment use Radio-Frequency Identification (RFID) in its own operations in 2022? (RFID uses passive or active radio-frequency identification chips to track inventory, products, or other objects.) If yes: what were capital expenditures? How was it acquired?" },
+  { id: "ec22-tech-6", survey: "Economic Census (2022)", year: "2022", section: "Technology", question: "Did this establishment use touchscreens or kiosks for customer interface in its own operations in 2022? (Touchscreens/kiosks allow customers to receive information or perform tasks — e.g., self-checkout, self-check-in, touchscreen ordering.) If yes: what were capital expenditures? How was it acquired?" },
+  // ── Wholesale sector (WH- forms) ──────────────────────────────────────────
+  { id: "ec22-wh-4b", survey: "Economic Census (2022)", year: "2022", section: "Principal Activity", question: "Which ONE of the following best describes this establishment's primary type of wholesale operation in 2022? (Merchant wholesaler buying and selling on own account — importer, exporter, distributor/jobber, own-brand importer; Manufacturers' sales branch or office; Agent/broker/commission merchant — manufacturers' rep, auction company, broker, import/export agent; Electronic market/B2B marketplace operating on commission; Other.)" },
+  { id: "ec22-wh-5b", survey: "Economic Census (2022)", year: "2022", section: "Sales & Revenue", question: "Did this establishment earn commissions for the sale of merchandise? If yes: what was the gross selling value of goods sold on commission? What were the commissions/fees received? What was the average commission rate?" },
+  { id: "ec22-wh-5f", survey: "Economic Census (2022)", year: "2022", section: "Sales & Revenue", question: "During 2022, what percent of total revenue was from products manufactured or mined in the United States by your company or its subsidiaries? (0% / 1–25% / 26–49% / 50–75% / 76–100%) Did e-commerce account for more than 50% of this establishment's sales and operating receipts?" },
+  { id: "ec22-wh-16", survey: "Economic Census (2022)", year: "2022", section: "Selected Expenses", question: "What were total operating expenses (including payroll, excluding cost of goods sold and interest)? What were purchases of merchandise for resale, net of returns, allowances, and trade and cash discounts (including amounts allowed for trade-ins)?" },
+  // ── Retail + Wholesale shared: Class of Customer and Method of Selling ─────
+  { id: "ec22-rtwh-20", survey: "Economic Census (2022)", year: "2022", section: "Sales & Revenue", question: "Class of customer: As a general business practice, did this establishment sell to household consumers and individual users in 2022? Were 75% or more of sales to retailers/wholesalers/distributors for resale? Did the establishment require proof of business or professional license from new customers? What was the estimated percentage of total sales by class of customer (household consumers / export sales / retailers for resale / wholesalers for resale / repair shops / manufacturing/mining industrial users / restaurants and food services / businesses for own use / building contractors / farmers / government / other)?" },
+  { id: "ec22-rtwh-21", survey: "Economic Census (2022)", year: "2022", section: "Sales & Revenue", question: "Which ONE of the following best describes this establishment's primary method of selling in 2022? (Electronic commerce / Store or display showroom / Warehouse or office including telephone/fax and outside sales reps / Mail order / Home shopping via television / Direct selling — house-to-house, party plan, temporary kiosk / Vending machines / Other)" },
+  // ── Finance/Insurance/Real Estate/Services sector (IA- forms) ─────────────
+  { id: "ec22-ia-5", survey: "Economic Census (2022)", year: "2022", section: "Sales & Revenue", question: "What was the revenue for this establishment in 2022? Were any sales/receipts/revenue a result of e-commerce transactions? What percent of total revenue was from e-commerce? What percent was generated from exports (including exports to U.S. territories)?" },
+  { id: "ec22-ia-7c", survey: "Economic Census (2022)", year: "2022", section: "Fringe Benefits", question: "What were the employer's annual costs for fringe benefits: (1) Legally required fringe benefits (Social Security, Medicare, unemployment compensation, workers' compensation, state disability); (2) Voluntarily provided fringe benefits (life insurance, medical insurance, pensions, welfare benefits, union-negotiated benefits)?" },
+];
+
+const SURVEYS = ["All", ...Array.from(new Set(DB.map(q => q.survey))).sort()];
+const YEARS_ALL = ["All", "Pre-2015", "2015–2019", "2020–2022", "2023–2025"];
+
+function yearInRange(year, range) {
+  if (range === "All") return true;
+  if (range === "Pre-2015") return /\b(200[0-9]|201[0-4])\b/.test(year);
+  if (range === "2015–2019") return /\b(201[5-9])\b/.test(year);
+  if (range === "2020–2022") return /\b(202[0-2])\b/.test(year);
+  if (range === "2023–2025") return /\b(202[3-5])\b/.test(year);
+  return true;
+}
+
+function highlight(text, terms) {
+  if (!terms || terms.length === 0) return text;
+  const regex = new RegExp(`(${terms.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'gi');
+  const parts = text.split(regex);
+  return parts.map((p, i) =>
+    regex.test(p) ? <mark key={i} style={{ background: '#fef08a', borderRadius: 2, padding: '0 1px' }}>{p}</mark> : p
+  );
+}
+
+const SURVEY_COLORS = {
+  "Annual Business Survey (ABS)": { bg: "#fff7ed", text: "#c2410c", border: "#fed7aa" },
+  "MOPS": { bg: "#f0fdfa", text: "#0f766e", border: "#99f6e4" },
+  "CPS Computer & Internet Use Supplement": { bg: "#fefce8", text: "#a16207", border: "#fde68a" },
+  "CPS Work from Home Supplement": { bg: "#fefce8", text: "#a16207", border: "#fde68a" },
+  "American Community Survey (ACS)": { bg: "#fdf2f8", text: "#9d174d", border: "#f9a8d4" },
+  "Household Pulse Survey": { bg: "#f8fafc", text: "#475569", border: "#cbd5e1" },
+  "Decennial Census": { bg: "#f5f3ff", text: "#6d28d9", border: "#ddd6fe" },
+  "BERD (Business Enterprise R&D Survey)": { bg: "#fff1f2", text: "#be123c", border: "#fecdd3" },
+  "Annual Capital Expenditures Survey (ACES)": { bg: "#fef9f0", text: "#b45309", border: "#fde68a" },
+  "Economic Census (2022)": { bg: "#f0f9ff", text: "#0369a1", border: "#bae6fd" },
+};
+
+const SECTION_ICONS = {
+  "Artificial Intelligence": "🤖",
+  "AI Use": "🤖",
+  "Generative AI": "✨",
+  "AI Adoption Plans": "📈",
+  "Technology & AI": "💡",
+  "Technology & Automation": "⚙️",
+  "Work from Home": "🏠",
+  "Remote Work": "🏠",
+  "Management Practices": "📋",
+  "Incentives": "🏆",
+  "Promotions & Dismissals": "📊",
+  "Organization & Decentralization": "🏢",
+  "Data & Decision Making": "📊",
+  "Costs & Purchased Services": "💰",
+  "Innovation": "🔬",
+  "R&D Paid For by Company": "🔬", "R&D Paid For by Others": "🤝",
+  "R&D Management & Strategy": "🧭", "Intellectual Property & Technology Transfer": "⚖️",
+  "Tax Topics": "🧾", "Assets": "🏗️",
+  "Workforce Characteristics": "👥",
+  "Employment": "👔",
+  "Financing": "💵",
+  "Computer & Internet": "💻",
+  "Industrial Robots": "🦾",
+  "Employment & Payroll": "👔",
+  "Fringe Benefits": "🏥",
+  "Inventories": "📦",
+  "Capital Expenditures": "🏗️",
+  "Rental Payments": "🏢",
+  "Selected Expenses": "💰",
+  "Sales & Revenue": "📈",
+  "Operational Status": "🔄",
+  "Principal Activity": "🏭",
+  "Donated Products": "🎁",
+  "COVID-19 Impact": "🦠",
+  "Ownership (single-unit)": "🏛️",
+  "Establishment Count (single-unit)": "📍",
+};
+
+function App() {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [filterSurvey, setFilterSurvey] = useState("All");
+  const [filterYear, setFilterYear] = useState("All");
+  const [highlightTerms, setHighlightTerms] = useState([]);
+
+  async function doSearch() {
+    if (!query.trim()) return;
+    setLoading(true);
+    setError(null);
+    setResults(null);
+
+    const filtered = DB.filter(q =>
+      (filterSurvey === "All" || q.survey === filterSurvey) &&
+      yearInRange(q.year, filterYear)
+    );
+
+    const prompt = `You are a research assistant helping a user find relevant US Census survey questions.
+
+The user's search topic is: "${query}"
+
+Below is a complete list of Census survey questions (with IDs). Your task:
+1. Identify ALL questions that are semantically relevant to the user's topic — including synonyms, related concepts, and adjacent themes.
+2. Be INCLUSIVE: evaluate every question independently. Do NOT skip a question just because another similar one was already matched.
+3. Return a JSON array of objects, each with:
+   - "id": the question ID
+   - "relevance": a short 1-sentence explanation of why it matches (plain text, no markdown)
+4. Return ONLY the JSON array. No preamble, no markdown fences.
+5. If no questions match, return an empty array [].
+
+Questions:
+${filtered.map(q => `ID: ${q.id}\nSurvey: ${q.survey} (${q.year})\nSection: ${q.section}\nQuestion: ${q.question}`).join('\n\n')}`;
+
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 4000,
+          messages: [{ role: "user", content: prompt }]
+        })
+      });
+      const data = await res.json();
+      const raw = data.content?.find(b => b.type === "text")?.text || "[]";
+      const parsed = JSON.parse(raw.replace(/```json|```/g, "").trim());
+
+      const matched = parsed
+        .map(r => {
+          const q = DB.find(x => x.id === r.id);
+          return q ? { ...q, relevance: r.relevance } : null;
+        })
+        .filter(Boolean);
+
+      const terms = query.trim().split(/\s+/).filter(t => t.length > 2);
+      setHighlightTerms(terms);
+      setResults(matched);
+    } catch (e) {
+      setError("Something went wrong. Please try again.");
+    }
+    setLoading(false);
+  }
+
+  const grouped = results
+    ? results.reduce((acc, q) => {
+        if (!acc[q.survey]) acc[q.survey] = [];
+        acc[q.survey].push(q);
+        return acc;
+      }, {})
+    : {};
+
+  const totalQuestions = DB.length;
+  const totalSurveys = Array.from(new Set(DB.map(q => q.survey))).length;
+
+  return (
+    <div style={{ fontFamily: "'Inter', system-ui, sans-serif", minHeight: "100vh", background: "#f1f5f9" }}>
+      {/* Header */}
+      <div style={{
+        background: "linear-gradient(135deg, #1e3a5f 0%, #1e4976 60%, #163354 100%)",
+        color: "white",
+        padding: "28px 0 22px",
+        boxShadow: "0 2px 12px rgba(0,0,0,0.18)"
+      }}>
+        <div style={{ maxWidth: 820, margin: "0 auto", padding: "0 24px" }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                <span style={{ fontSize: 24 }}>🔍</span>
+                <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, letterSpacing: "-0.4px" }}>
+                  Census Questionnaire Search
+                </h1>
+              </div>
+              <p style={{ margin: 0, fontSize: 13.5, color: "#93c5fd", lineHeight: 1.55 }}>
+                Semantic search across US Census Bureau surveys — find questions by topic, concept, or keyword.
+              </p>
+            </div>
+            <div style={{ display: "flex", gap: 10, alignSelf: "flex-end" }}>
+              <div style={{ background: "rgba(255,255,255,0.1)", borderRadius: 8, padding: "7px 14px", textAlign: "center" }}>
+                <div style={{ fontSize: 18, fontWeight: 800, lineHeight: 1 }}>{totalQuestions}</div>
+                <div style={{ fontSize: 10.5, color: "#93c5fd", marginTop: 2 }}>Questions</div>
+              </div>
+              <div style={{ background: "rgba(255,255,255,0.1)", borderRadius: 8, padding: "7px 14px", textAlign: "center" }}>
+                <div style={{ fontSize: 18, fontWeight: 800, lineHeight: 1 }}>{totalSurveys}</div>
+                <div style={{ fontSize: 10.5, color: "#93c5fd", marginTop: 2 }}>Surveys</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Search bar */}
+      <div style={{ background: "white", borderBottom: "1px solid #e2e8f0", padding: "14px 0", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
+        <div style={{ maxWidth: 580, margin: "0 auto", padding: "0 24px" }}>
+          <div style={{ display: "flex", gap: 8 }}>
+            <div style={{ flex: 1, position: "relative" }}>
+              <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", fontSize: 15, color: "#94a3b8" }}>🔍</span>
+              <input
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && doSearch()}
+                placeholder='Search by topic — e.g. "AI adoption", "remote work", "production bonuses"'
+                style={{
+                  width: "100%", padding: "10px 14px 10px 36px", fontSize: 14.5,
+                  border: "1.5px solid #cbd5e1", borderRadius: 8, outline: "none",
+                  color: "#1e293b", boxSizing: "border-box",
+                  transition: "border-color 0.15s",
+                }}
+                onFocus={e => e.target.style.borderColor = "#3b82f6"}
+                onBlur={e => e.target.style.borderColor = "#cbd5e1"}
+              />
+            </div>
+            <button
+              onClick={doSearch}
+              disabled={loading || !query.trim()}
+              style={{
+                padding: "10px 24px",
+                background: loading ? "#94a3b8" : "linear-gradient(135deg, #1e3a5f, #2563eb)",
+                color: "white", border: "none", borderRadius: 8, fontSize: 14,
+                fontWeight: 700, cursor: loading ? "not-allowed" : "pointer",
+                whiteSpace: "nowrap", boxShadow: loading ? "none" : "0 2px 6px rgba(37,99,235,0.3)",
+                transition: "all 0.15s",
+              }}
+            >
+              {loading ? "Searching…" : "Search"}
+            </button>
+          </div>
+
+          {/* Filters */}
+          <div style={{ display: "flex", gap: 12, marginTop: 10, flexWrap: "wrap", alignItems: "center" }}>
+            <span style={{ fontSize: 12, color: "#94a3b8", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Filter:</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ fontSize: 12, color: "#64748b", fontWeight: 500 }}>Survey</span>
+              <select
+                value={filterSurvey}
+                onChange={e => setFilterSurvey(e.target.value)}
+                style={{ fontSize: 12.5, padding: "5px 9px", borderRadius: 6, border: "1px solid #cbd5e1", color: "#334155", background: "#f8fafc" }}
+              >
+                {SURVEYS.map(s => <option key={s}>{s}</option>)}
+              </select>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ fontSize: 12, color: "#64748b", fontWeight: 500 }}>Year range</span>
+              <select
+                value={filterYear}
+                onChange={e => setFilterYear(e.target.value)}
+                style={{ fontSize: 12.5, padding: "5px 9px", borderRadius: 6, border: "1px solid #cbd5e1", color: "#334155", background: "#f8fafc" }}
+              >
+                {YEARS_ALL.map(y => <option key={y}>{y}</option>)}
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Results */}
+      <div style={{ maxWidth: 820, margin: "0 auto", padding: "20px 24px" }}>
+        {error && (
+          <div style={{ background: "#fee2e2", border: "1px solid #fca5a5", borderRadius: 10, padding: 14, color: "#991b1b", fontSize: 14 }}>
+            {error}
+          </div>
+        )}
+
+        {results && results.length === 0 && (
+          <div style={{ textAlign: "center", padding: "48px 0", color: "#64748b" }}>
+            <div style={{ fontSize: 40, marginBottom: 10 }}>🔎</div>
+            <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 4, color: "#334155" }}>No matching questions found</div>
+            <div style={{ fontSize: 14 }}>Try a different topic or broader search term.</div>
+          </div>
+        )}
+
+        {results && results.length > 0 && (
+          <>
+            <div style={{ fontSize: 13, color: "#64748b", marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ background: "#1e3a5f", color: "white", borderRadius: 20, padding: "2px 10px", fontSize: 12, fontWeight: 700 }}>
+                {results.length} match{results.length !== 1 ? "es" : ""}
+              </span>
+              <span>across <strong>{Object.keys(grouped).length}</strong> survey{Object.keys(grouped).length !== 1 ? "s" : ""}</span>
+            </div>
+            {Object.entries(grouped).map(([survey, qs]) => {
+              const colors = SURVEY_COLORS[survey] || { bg: "#f8fafc", text: "#475569", border: "#cbd5e1" };
+              return (
+                <div key={survey} style={{ marginBottom: 20, borderRadius: 10, overflow: "hidden", boxShadow: "0 1px 6px rgba(0,0,0,0.07)" }}>
+                  <div style={{
+                    background: "linear-gradient(135deg, #1e3a5f, #1e4976)",
+                    color: "white", padding: "10px 16px",
+                    fontSize: 13.5, fontWeight: 700,
+                    display: "flex", alignItems: "center", justifyContent: "space-between"
+                  }}>
+                    <span>{survey}</span>
+                    <span style={{ background: "rgba(255,255,255,0.18)", borderRadius: 12, padding: "1px 9px", fontSize: 12 }}>
+                      {qs.length} question{qs.length !== 1 ? "s" : ""}
+                    </span>
+                  </div>
+                  {qs.map((q, i) => (
+                    <div key={q.id} style={{
+                      background: "white",
+                      borderLeft: `3px solid ${colors.border}`,
+                      borderBottom: i < qs.length - 1 ? "1px solid #f1f5f9" : "none",
+                      padding: "14px 16px",
+                    }}>
+                      <div style={{ display: "flex", gap: 6, marginBottom: 9, flexWrap: "wrap", alignItems: "center" }}>
+                        <span style={{ fontSize: 12.5, color: "#64748b", fontWeight: 500, marginRight: 2 }}>
+                          {SECTION_ICONS[q.section] || "📌"} {q.section}
+                        </span>
+                        {q.years && q.years.length > 1 ? (
+                          <span style={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
+                            {q.years.map(y => (
+                              <span key={y} style={{
+                                background: "#dcfce7", color: "#166534",
+                                border: "1px solid #bbf7d0",
+                                borderRadius: 4, padding: "1px 7px", fontSize: 11, fontWeight: 700
+                              }}>{y}</span>
+                            ))}
+                          </span>
+                        ) : (
+                          <span style={{
+                            background: colors.bg, color: colors.text,
+                            border: `1px solid ${colors.border}`,
+                            borderRadius: 4, padding: "1px 7px", fontSize: 11, fontWeight: 600
+                          }}>
+                            {q.year}
+                          </span>
+                        )}
+                        <span style={{
+                          background: "#f1f5f9", color: "#64748b",
+                          borderRadius: 4, padding: "1px 7px", fontSize: 10.5, fontWeight: 500,
+                          fontFamily: "monospace"
+                        }}>
+                          {q.id}
+                        </span>
+                      </div>
+                      <p style={{ margin: "0 0 10px", fontSize: 14, color: "#1e293b", lineHeight: 1.6 }}>
+                        {highlight(q.question, highlightTerms)}
+                      </p>
+                      <div style={{
+                        background: "#fffbeb", borderLeft: "3px solid #f59e0b",
+                        padding: "6px 11px", borderRadius: "0 5px 5px 0",
+                        fontSize: 12.5, color: "#78716c", display: "flex", gap: 6
+                      }}>
+                        <span style={{ fontWeight: 700, color: "#92400e", whiteSpace: "nowrap" }}>Why it matched:</span>
+                        <span>{q.relevance}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </>
+        )}
+
+        {!results && !loading && (
+          <div style={{ textAlign: "center", padding: "52px 0", color: "#94a3b8" }}>
+            <div style={{ fontSize: 52, marginBottom: 14 }}>📋</div>
+            <div style={{ fontWeight: 700, fontSize: 17, color: "#475569", marginBottom: 6 }}>
+              Search Census Questionnaires
+            </div>
+            <div style={{ fontSize: 13.5, maxWidth: 440, margin: "0 auto", lineHeight: 1.65, color: "#64748b" }}>
+              Type any topic — AI adoption, remote work, performance bonuses, automation, broadband, wages —
+              and find every relevant question across Census surveys.
+            </div>
+            <div style={{ marginTop: 22, display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
+              {["Artificial Intelligence", "remote work", "performance bonuses", "automation", "cloud computing", "predictive analytics"].map(t => (
+                <button key={t} onClick={() => setQuery(t)}
+                  style={{
+                    background: "white", border: "1.5px solid #e2e8f0", borderRadius: 20,
+                    padding: "6px 14px", fontSize: 12.5, color: "#475569", cursor: "pointer",
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.06)", transition: "all 0.12s",
+                  }}
+                  onMouseOver={e => { e.target.style.borderColor = "#3b82f6"; e.target.style.color = "#1d4ed8"; }}
+                  onMouseOut={e => { e.target.style.borderColor = "#e2e8f0"; e.target.style.color = "#475569"; }}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div style={{ textAlign: "center", padding: "12px 0 28px", fontSize: 11.5, color: "#cbd5e1" }}>
+        Covers: BTOS Core (2022–2026) · BTOS AI Supplement (2023–2026) · BTOS WFH Supplement (2024–2025) · ABS (2018–2020) · ASM (2018–2021) · ACES (1995–2003) · MOPS (2010, 2015, 2021) · BERD (2024) · Economic Census (2022)
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>
