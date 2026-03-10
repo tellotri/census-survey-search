@@ -490,9 +490,11 @@ function App() {
   const [filterSurvey, setFilterSurvey] = useState("All");
   const [filterYear, setFilterYear] = useState("All");
   const [highlightTerms, setHighlightTerms] = useState([]);
+  const [apiKey, setApiKey] = useState("");
 
   async function doSearch() {
     if (!query.trim()) return;
+    if (!apiKey.trim()) { setError("Please enter your Anthropic API key above before searching."); return; }
     setLoading(true);
     setError(null);
     setResults(null);
@@ -521,7 +523,7 @@ ${filtered.map(q => `ID: ${q.id}\nSurvey: ${q.survey} (${q.year})\nSection: ${q.
     try {
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
         body: JSON.stringify({
           model: "claude-haiku-4-5-20251001",
           max_tokens: 4000,
@@ -598,6 +600,24 @@ ${filtered.map(q => `ID: ${q.id}\nSurvey: ${q.survey} (${q.year})\nSection: ${q.
       {/* Search bar */}
       <div style={{ background: "white", borderBottom: "1px solid #e2e8f0", padding: "14px 0", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
         <div style={{ maxWidth: 580, margin: "0 auto", padding: "0 24px" }}>
+
+          {/* API Key input */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, padding: "8px 12px" }}>
+            <span style={{ fontSize: 13, color: "#64748b", whiteSpace: "nowrap", fontWeight: 500 }}>🔑 API Key:</span>
+            <input
+              type="password"
+              value={apiKey}
+              onChange={e => setApiKey(e.target.value)}
+              placeholder="Enter your Anthropic API key (sk-ant-...)"
+              style={{
+                flex: 1, border: "none", background: "transparent", fontSize: 13,
+                color: "#1e293b", outline: "none", fontFamily: "monospace"
+              }}
+            />
+            {apiKey && <span style={{ fontSize: 11, color: "#16a34a", fontWeight: 600, whiteSpace: "nowrap" }}>✓ Set</span>}
+          </div>
+
+          {/* Search input */}
           <div style={{ display: "flex", gap: 8 }}>
             <div style={{ flex: 1, position: "relative" }}>
               <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", fontSize: 15, color: "#94a3b8" }}>🔍</span>
