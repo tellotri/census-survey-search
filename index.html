@@ -523,7 +523,7 @@ ${filtered.map(q => `ID: ${q.id}\nSurvey: ${q.survey} (${q.year})\nSection: ${q.
     try {
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+        headers: { "Content-Type": "application/json", "x-api-key": apiKey.trim(), "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
         body: JSON.stringify({
           model: "claude-haiku-4-5-20251001",
           max_tokens: 4000,
@@ -531,6 +531,12 @@ ${filtered.map(q => `ID: ${q.id}\nSurvey: ${q.survey} (${q.year})\nSection: ${q.
         })
       });
       const data = await res.json();
+      if (!res.ok) {
+        const msg = data?.error?.message || "API error " + res.status;
+        setError("API error: " + msg);
+        setLoading(false);
+        return;
+      }
       const raw = data.content?.find(b => b.type === "text")?.text || "[]";
       const parsed = JSON.parse(raw.replace(/```json|```/g, "").trim());
 
@@ -545,7 +551,7 @@ ${filtered.map(q => `ID: ${q.id}\nSurvey: ${q.survey} (${q.year})\nSection: ${q.
       setHighlightTerms(terms);
       setResults(matched);
     } catch (e) {
-      setError("Something went wrong. Please try again.");
+      setError("Something went wrong: " + e.message);
     }
     setLoading(false);
   }
